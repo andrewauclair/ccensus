@@ -80,6 +80,7 @@ Project parse_project(std::string_view name, std::istream&  file, const std::fil
 * 
 * find a library that can parse command line args. I think I have one starred on GitHub
 */
+// TODO project total lines should count projects that it depends on. The csv output will have a bunch of different pieces of info.
 int main(int argc, char** argv)
 {
 	if (argc < 2)
@@ -89,10 +90,9 @@ int main(int argc, char** argv)
 
 	auto clock_start = std::chrono::system_clock::now();
 
-	bool verbose = false;
+	bool verbose = true;
 
 	std::fstream solution_file(argv[1]);
-	std::string line;
 
 	std::filesystem::path solution_path = std::filesystem::path(argv[1]).parent_path();
 
