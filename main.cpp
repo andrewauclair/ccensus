@@ -7,21 +7,94 @@
 #include <filesystem>
 #include <chrono>
 
+bool is_blank(std::string_view string)
+{
+	for (auto ch : string)
+	{
+		if (ch != ' ' && ch != '\t') return false;
+	}
+	return true;
+}
+
+bool is_single_comment(std::string_view string)
+{
+	char prev_ch = ' ';
+
+	for (auto ch : string)
+	{
+		if (ch == '/' && prev_ch == '/') return true;
+
+		prev_ch = ch;
+	}
+	return false;
+}
+
+enum class Block_Comment_Type
+{
+	None, // there is no block comment
+	Inline_Comment, // there is a block comment, but it's contained within this line
+	Opening // there is a opening block comment and the closing block comment is on a future line
+};
+
+Block_Comment_Type is_opening_block_comment(std::string_view string)
+{
+	bool in_quotes = false;
+	char prev_ch = ' ';
+	Block_Comment_Type type = Block_Comment_Type::None;
+
+	for (auto ch : string)
+	{
+		if (!in_quotes && (ch == '\'' || ch == '"')) in_quotes = true;
+		else if (in_quotes && (ch == '\'' || ch == '"') && prev_ch != '\\') in_quotes = false;
+		else if (!in_quotes && prev_ch == '/' && ch == '*') type = Block_Comment_Type::Opening;
+		else if (!in_quotes && prev_ch == '*' && ch == '/') type = Block_Comment_Type::Inline_Comment;
+
+		prev_ch = ch;
+	}
+
+	return type;
+}
+
+// this function will find a closing block comment of the form */ in the string
+// only called when we know we're inside of a block comment
+bool is_closing_block_comment(std::string_view string)
+{
+	char prev_ch = ' ';
+
+	for (auto ch : string)
+	{
+		if (prev_ch == '*' && ch == '/') return true;
+
+		prev_ch = ch;
+	}
+}
+
+struct LineCounts
+{
+	std::int64_t total_lines = 0;
+	std::int64_t code_only_lines = 0;
+	std::int64_t code_and_comment_lines = 0;
+	std::int64_t comment_lines = 0;
+	std::int64_t blank_lines = 0;
+};
+
 struct Project 
 {
 	std::string name;
 	std::filesystem::path path;
 	std::vector<std::filesystem::path> files;
 
+	LineCounts counts;
+
 	Project(std::string name) : name(std::move(name))
 	{
 	}
 
-	std::int64_t total_files() const { return files.size(); }
-
-	std::int64_t total_lines() const
+	void process_files()
 	{
-		std::int64_t total = 0;
+		counts = {};
+		bool in_block_comment = false;
+
 		for (auto&& file_path : files)
 		{
 			auto file = std::ifstream(file_path);
@@ -29,11 +102,38 @@ struct Project
 
 			while (std::getline(file, line))
 			{
-				total++;
+				counts.total_lines++;
+
+				if (is_blank(line))
+				{
+					counts.blank_lines++;
+				}
+
+				if (is_single_comment(line))
+				{
+					counts.comment_lines++;
+				}
+
+				if (!in_block_comment && is_opening_block_comment(line) == Block_Comment_Type::Opening)
+				{
+					// TODO need to check if there was any code on this line too
+					in_block_comment = true;
+					counts.comment_lines++;
+				}
+				else if (in_block_comment && is_closing_block_comment(line))
+				{
+					in_block_comment = false;
+					counts.comment_lines++;
+				}
+				else if (in_block_comment)
+				{
+					counts.comment_lines++;
+				}
 			}
 		}
-		return total;
 	}
+
+	std::int64_t total_files() const { return files.size(); }
 };
 
 struct Solution 
@@ -44,6 +144,14 @@ struct Solution
 
 	Solution(std::string name) : name(std::move(name))
 	{
+	}
+
+	void process_files()
+	{
+		for (auto&& project : projects)
+		{
+			project.process_files();
+		}
 	}
 
 	std::int64_t total_projects() const { return projects.size(); }
@@ -58,7 +166,21 @@ struct Solution
 	std::int64_t total_lines() const
 	{
 		std::int64_t total = 0;
-		for (auto&& project : projects) total += project.total_lines();
+		for (auto&& project : projects) total += project.counts.total_lines;
+		return total;
+	}
+
+	std::int64_t blank_lines() const
+	{
+		std::int64_t total = 0;
+		for (auto&& project : projects) total += project.counts.blank_lines;
+		return total;
+	}
+
+	std::int64_t comment_lines() const
+	{
+		std::int64_t total = 0;
+		for (auto&& project : projects) total += project.counts.comment_lines;
 		return total;
 	}
 };
@@ -96,13 +218,17 @@ int main(int argc, char** argv)
 
 	std::filesystem::path solution_path = std::filesystem::path(argv[1]).parent_path();
 
-	const auto solution = parse_solution(solution_path.filename().string(), solution_file, solution_path, verbose);
+	auto solution = parse_solution(solution_path.filename().string(), solution_file, solution_path, verbose);
 	
+	solution.process_files();
+
+	std::cout << "Solution " << solution.name << '\n';
 	std::cout << "Total Projects: " << solution.total_projects() << '\n';
 	std::cout << "Total Files:    " << solution.total_files() << '\n';
 	std::cout << "Total Lines:    " << solution.total_lines() << '\n';
+	std::cout << "Blank Lines:    " << solution.blank_lines() << '\n';
+	std::cout << "Comment Lines:  " << solution.comment_lines() << '\n';
 
-	
 	auto clock_now = std::chrono::system_clock::now();
 	auto elapsed_time = std::chrono::duration_cast <std::chrono::milliseconds> (clock_now - clock_start).count();
 	std::cout << "Elapsed Time:   " << elapsed_time << "ms \n";
