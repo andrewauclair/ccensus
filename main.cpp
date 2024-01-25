@@ -67,6 +67,8 @@ bool is_closing_block_comment(std::string_view string)
 
 		prev_ch = ch;
 	}
+
+	return false;
 }
 
 struct LineCounts
@@ -104,14 +106,17 @@ struct Project
 			{
 				counts.total_lines++;
 
-				if (is_blank(line))
+				if (!in_block_comment)
 				{
-					counts.blank_lines++;
-				}
+					if (is_blank(line))
+					{
+						counts.blank_lines++;
+					}
 
-				if (is_single_comment(line))
-				{
-					counts.comment_lines++;
+					if (is_single_comment(line))
+					{
+						counts.comment_lines++;
+					}
 				}
 
 				if (!in_block_comment && is_opening_block_comment(line) == Block_Comment_Type::Opening)
@@ -205,7 +210,7 @@ Project parse_project(std::string_view name, std::istream&  file, const std::fil
 // TODO project total lines should count projects that it depends on. The csv output will have a bunch of different pieces of info.
 int main(int argc, char** argv)
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
 		return -1;
 	}
@@ -214,24 +219,83 @@ int main(int argc, char** argv)
 
 	bool verbose = true;
 
-	std::fstream solution_file(argv[1]);
+	if (std::string(argv[1]) == "--compare-solutions")
+	{
+		if (argc < 4)
+		{
+			return -1;
+		}
 
-	std::filesystem::path solution_path = std::filesystem::path(argv[1]).parent_path();
+		std::ifstream solutionA_file(argv[2]);
+		std::ifstream solutionB_file(argv[3]);
 
-	auto solution = parse_solution(solution_path.filename().string(), solution_file, solution_path, verbose);
-	
-	solution.process_files();
+		std::filesystem::path solutionA_path = std::filesystem::path(argv[2]).parent_path();
+		std::filesystem::path solutionB_path = std::filesystem::path(argv[3]).parent_path();
 
-	std::cout << "Solution " << solution.name << '\n';
-	std::cout << "Total Projects: " << solution.total_projects() << '\n';
-	std::cout << "Total Files:    " << solution.total_files() << '\n';
-	std::cout << "Total Lines:    " << solution.total_lines() << '\n';
-	std::cout << "Blank Lines:    " << solution.blank_lines() << '\n';
-	std::cout << "Comment Lines:  " << solution.comment_lines() << '\n';
+		auto solutionA = parse_solution(solutionA_path.filename().string(), solutionA_file, solutionA_path, verbose);
+		auto solutionB = parse_solution(solutionB_path.filename().string(), solutionB_file, solutionB_path, verbose);
+
+		solutionA.process_files();
+		solutionB.process_files();
+
+		std::cout << "\n\n";
+		std::cout << "Solution A: " << solutionA.name << "\n\n";
+		std::cout << "Total Projects: " << solutionA.total_projects() << '\n';
+		std::cout << "Total Files:    " << solutionA.total_files() << '\n';
+		std::cout << "Total Lines:    " << solutionA.total_lines() << '\n';
+		std::cout << "Blank Lines:    " << solutionA.blank_lines() << '\n';
+		std::cout << "Comment Lines:  " << solutionA.comment_lines() << '\n';
+
+		std::cout << "\n\n";
+		std::cout << "Solution B: " << solutionB.name << "\n\n";
+		std::cout << "Total Projects: " << solutionB.total_projects() << '\n';
+		std::cout << "Total Files:    " << solutionB.total_files() << '\n';
+		std::cout << "Total Lines:    " << solutionB.total_lines() << '\n';
+		std::cout << "Blank Lines:    " << solutionB.blank_lines() << '\n';
+		std::cout << "Comment Lines:  " << solutionB.comment_lines() << '\n';
+
+		std::cout << "\n\n";
+		std::cout << "Difference\n\n";
+		std::cout << "Projects:       " << std::showpos << (solutionB.total_projects() - solutionA.total_projects()) << '\n';
+		std::cout << "Files:          " << std::showpos << (solutionB.total_files() - solutionA.total_files()) << '\n';
+		std::cout << "Lines:          " << std::showpos << (solutionB.total_lines() - solutionA.total_lines()) << '\n';
+		std::cout << "Blank Lines:    " << std::showpos << (solutionB.blank_lines() - solutionA.blank_lines()) << '\n';
+		std::cout << "Comment Lines:  " << std::showpos << (solutionB.comment_lines() - solutionA.comment_lines()) << '\n';
+		std::cout << std::noshowpos;
+	}
+	else if (std::string(argv[1]) == "--compare-projects")
+	{
+		if (argc < 4)
+		{
+			return -1;
+		}
+
+	}
+	else if (std::string(argv[1]) == "--single-solution")
+	{
+		std::ifstream solution_file(argv[2]);
+
+		std::filesystem::path solution_path = std::filesystem::path(argv[2]).parent_path();
+
+		auto solution = parse_solution(solution_path.filename().string(), solution_file, solution_path, verbose);
+
+		solution.process_files();
+
+		std::cout << "Solution " << solution.name << '\n';
+		std::cout << "Total Projects: " << solution.total_projects() << '\n';
+		std::cout << "Total Files:    " << solution.total_files() << '\n';
+		std::cout << "Total Lines:    " << solution.total_lines() << '\n';
+		std::cout << "Blank Lines:    " << solution.blank_lines() << '\n';
+		std::cout << "Comment Lines:  " << solution.comment_lines() << '\n';
+	}
+	else if (std::string(argv[1]) == "--single-project")
+	{
+
+	}
 
 	auto clock_now = std::chrono::system_clock::now();
 	auto elapsed_time = std::chrono::duration_cast <std::chrono::milliseconds> (clock_now - clock_start).count();
-	std::cout << "Elapsed Time:   " << elapsed_time << "ms \n";
+	std::cout << "\nElapsed Time:   " << elapsed_time << "ms \n";
 }
 
 Solution parse_solution(std::string_view name, std::istream& solution_file, const std::filesystem::path& solution_path, bool verbose)
