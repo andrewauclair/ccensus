@@ -106,6 +106,8 @@ struct Project
 		return lhs.name < rhs.name;
 	}
 
+	Project() = default;
+
 	Project(std::string name) : name(std::move(name))
 	{
 	}
@@ -175,7 +177,7 @@ struct Solution
 {
 	std::string name;
 	std::filesystem::path path;
-	std::vector<Project> projects;
+	std::map<std::string, Project> projects;
 
 	Solution(std::string name) : name(std::move(name))
 	{
@@ -183,15 +185,13 @@ struct Solution
 
 	void process_files()
 	{
-		std::sort(projects.begin(), projects.end());
-
 		for (auto&& project : projects)
 		{
-			project.process_files();
+			project.second.process_files();
 		}
 	}
 
-	std::span<const Project> projects_view() const
+	const std::map<std::string, Project>& projects_view() const
 	{
 		return projects;
 	}
@@ -201,28 +201,28 @@ struct Solution
 	std::int64_t total_files() const
 	{
 		std::int64_t total = 0;
-		for (auto&& project : projects) total += project.total_files();
+		for (auto&& project : projects) total += project.second.total_files();
 		return total;
 	}
 
 	std::int64_t total_lines() const
 	{
 		std::int64_t total = 0;
-		for (auto&& project : projects) total += project.counts.total_lines;
+		for (auto&& project : projects) total += project.second.counts.total_lines;
 		return total;
 	}
 
 	std::int64_t blank_lines() const
 	{
 		std::int64_t total = 0;
-		for (auto&& project : projects) total += project.counts.blank_lines;
+		for (auto&& project : projects) total += project.second.counts.blank_lines;
 		return total;
 	}
 
 	std::int64_t comment_lines() const
 	{
 		std::int64_t total = 0;
-		for (auto&& project : projects) total += project.counts.comment_lines;
+		for (auto&& project : projects) total += project.second.counts.comment_lines;
 		return total;
 	}
 };
@@ -340,30 +340,56 @@ int main(int argc, char** argv)
 
 		for (auto&& project : solutionA.projects_view())
 		{
-			longest = std::max(longest, project.name.length());
+			longest = std::max(longest, project.second.name.length());
 
-			for (auto&& file : project.files_view())
+			for (auto&& file : project.second.files_view())
 			{
 				longest = std::max(longest, file.first.length());
 			}
 		}
 
 		std::cout << "\n\n";
-		std::cout << std::left << std::setw(longest) << std::setfill(' ') << ' ';
+		std::cout << std::left << std::setw(longest) << std::setfill(' ') << "Modified";
 		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Before";// solutionA.name;
 		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "After";// solutionB.name;
 		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Difference";
 		std::cout << '\n';
 
+		std::vector<std::string> deleted;
+		std::vector<std::string> added;
+
 		for (auto&& project : solutionA.projects_view())
 		{
+			auto projectB = solutionB.projects_view().find(project.first);
+
 			std::cout << '\n';
-			std::cout << std::left << std::setw(longest) << project.name;
+			std::cout << std::left << std::setw(longest) << project.second.name;
+			
+			std::cout << std::right << std::setw(spacing) << std::setfill(' ') << project.second.counts.total_lines;
+
+			if (projectB != solutionB.projects_view().end())
+			{
+				std::cout << std::right << std::setw(spacing) << std::setfill(' ') << projectB->second.counts.total_lines;
+			}
+
 			std::cout << '\n';
 
-			for (auto&& file : project.files_view())
+			for (auto&& file : project.second.files_view())
 			{
+
 				std::cout << std::left << std::setw(longest) << file.first;
+				std::cout << std::right << std::setw(spacing) << std::setfill(' ') << file.second.total_lines;
+
+				if (projectB != solutionB.projects_view().end())
+				{
+					auto fileB = projectB->second.files.find(file.first);
+				
+					if (fileB != projectB->second.files.end())
+					{
+						std::cout << std::right << std::setw(spacing) << std::setfill(' ') << fileB->second.total_lines;
+					}
+				}
+
 				std::cout << '\n';
 			}
 		}
@@ -446,7 +472,7 @@ Solution parse_solution(std::string_view name, std::istream& solution_file, cons
 				continue;
 			}
 
-			solution.projects.emplace_back(parse_project(project_name, project_filters, project_path, verbose));
+			solution.projects[project_name] = parse_project(project_name, project_filters, project_path, verbose);
 		}
 	}
 	return solution;
