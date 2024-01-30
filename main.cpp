@@ -6,6 +6,9 @@
 #include <sstream>
 #include <filesystem>
 #include <chrono>
+#include <span>
+#include <algorithm>
+#include <map>
 
 bool is_blank(std::string_view string)
 {
@@ -78,44 +81,68 @@ struct LineCounts
 	std::int64_t code_and_comment_lines = 0;
 	std::int64_t comment_lines = 0;
 	std::int64_t blank_lines = 0;
+
+	void operator+=(const LineCounts& counts)
+	{
+		total_lines += counts.total_lines;
+		code_only_lines += counts.code_only_lines;
+		code_and_comment_lines += counts.code_and_comment_lines;
+		comment_lines += counts.comment_lines;
+		blank_lines += counts.blank_lines;
+	}
 };
 
 struct Project 
 {
 	std::string name;
 	std::filesystem::path path;
-	std::vector<std::filesystem::path> files;
+	std::vector<std::filesystem::path> file_paths;
+	std::map<std::string, LineCounts> files;
 
 	LineCounts counts;
+
+	friend bool operator<(const Project& lhs, const Project& rhs)
+	{
+		return lhs.name < rhs.name;
+	}
 
 	Project(std::string name) : name(std::move(name))
 	{
 	}
 
+	const std::map<std::string, LineCounts>& files_view() const
+	{
+		return files;
+	}
+
 	void process_files()
 	{
+		std::sort(file_paths.begin(), file_paths.end());
+
 		counts = {};
 		bool in_block_comment = false;
 
-		for (auto&& file_path : files)
+		for (auto&& file_path : file_paths)
 		{
 			auto file = std::ifstream(file_path);
 			std::string line;
 
+			LineCounts file_counts;
+
 			while (std::getline(file, line))
 			{
-				counts.total_lines++;
+				file_counts.total_lines++;
 
 				if (!in_block_comment)
 				{
 					if (is_blank(line))
 					{
-						counts.blank_lines++;
+						file_counts.blank_lines++;
 					}
 
 					if (is_single_comment(line))
 					{
-						counts.comment_lines++;
+						file_counts.comment_lines++;
 					}
 				}
 
@@ -123,18 +150,21 @@ struct Project
 				{
 					// TODO need to check if there was any code on this line too
 					in_block_comment = true;
-					counts.comment_lines++;
+					file_counts.comment_lines++;
 				}
 				else if (in_block_comment && is_closing_block_comment(line))
 				{
 					in_block_comment = false;
-					counts.comment_lines++;
+					file_counts.comment_lines++;
 				}
 				else if (in_block_comment)
 				{
-					counts.comment_lines++;
+					file_counts.comment_lines++;
 				}
 			}
+
+			files[file_path.filename().string()] = file_counts;
+			counts += file_counts;
 		}
 	}
 
@@ -153,10 +183,17 @@ struct Solution
 
 	void process_files()
 	{
+		std::sort(projects.begin(), projects.end());
+
 		for (auto&& project : projects)
 		{
 			project.process_files();
 		}
+	}
+
+	std::span<const Project> projects_view() const
+	{
+		return projects;
 	}
 
 	std::int64_t total_projects() const { return projects.size(); }
@@ -202,12 +239,19 @@ Project parse_project(std::string_view name, std::istream&  file, const std::fil
 * 
 * output options: just dumping to console or printing a csv
 * 
-* some way to compare output. maybe an option where you can give it 2 folders, solutions or projects and compare the LOC differences
-* care would have to be taken with files that exist in one and not the other
 * 
-* find a library that can parse command line args. I think I have one starred on GitHub
 */
 // TODO project total lines should count projects that it depends on. The csv output will have a bunch of different pieces of info.
+// --compare-solutions <solution-a> <solution-b>
+// --compare-projects <project-a> <project-b>
+// --single-solution <solution>
+// --single-project <project>
+//
+// by default output is in a table in the console, to format as csv for dumping to a file and opening in excel, append --csv 
+
+//				Total Lines		Total Lines w/ dependencies		   Code Lines
+// Solution A             X							      					X
+// Project Aa             X							      X					X
 int main(int argc, char** argv)
 {
 	if (argc < 3)
@@ -226,6 +270,13 @@ int main(int argc, char** argv)
 			return -1;
 		}
 
+		bool display_details = false;
+
+		if (argc > 4 && std::string_view(argv[4]) == "--display-details")
+		{
+			display_details = true;
+		}
+
 		std::ifstream solutionA_file(argv[2]);
 		std::ifstream solutionB_file(argv[3]);
 
@@ -238,30 +289,84 @@ int main(int argc, char** argv)
 		solutionA.process_files();
 		solutionB.process_files();
 
-		std::cout << "\n\n";
-		std::cout << "Solution A: " << solutionA.name << "\n\n";
-		std::cout << "Total Projects: " << solutionA.total_projects() << '\n';
-		std::cout << "Total Files:    " << solutionA.total_files() << '\n';
-		std::cout << "Total Lines:    " << solutionA.total_lines() << '\n';
-		std::cout << "Blank Lines:    " << solutionA.blank_lines() << '\n';
-		std::cout << "Comment Lines:  " << solutionA.comment_lines() << '\n';
+		//						A			B		Difference
+		// Total Projects		2			3			+1
+		// Total Files:
+		// Total Lines:
+		// Blank Lines:
+		// Comment Lines:
+
+		const int first_column_spacing = 16;
+		const int spacing = 14;
 
 		std::cout << "\n\n";
-		std::cout << "Solution B: " << solutionB.name << "\n\n";
-		std::cout << "Total Projects: " << solutionB.total_projects() << '\n';
-		std::cout << "Total Files:    " << solutionB.total_files() << '\n';
-		std::cout << "Total Lines:    " << solutionB.total_lines() << '\n';
-		std::cout << "Blank Lines:    " << solutionB.blank_lines() << '\n';
-		std::cout << "Comment Lines:  " << solutionB.comment_lines() << '\n';
+		std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << ' ';
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Before";// solutionA.name;
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "After";// solutionB.name;
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Difference";
+		std::cout << '\n';
+
+		std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Total Projects: ";
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.total_projects();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.total_projects();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.total_projects() - solutionA.total_projects()) << std::noshowpos;
+		std::cout << '\n';
+
+		std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Total Files: ";
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.total_files();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.total_files();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.total_files() - solutionA.total_files()) << std::noshowpos;
+		std::cout << '\n';
+
+		std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Total Lines: ";
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.total_lines();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.total_lines();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.total_lines() - solutionA.total_lines()) << std::noshowpos;
+		std::cout << '\n';
+
+		std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Blank Lines: ";
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.blank_lines();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.blank_lines();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.blank_lines() - solutionA.blank_lines()) << std::noshowpos;
+		std::cout << '\n';
+
+		std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Comment Lines: ";
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.comment_lines();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.comment_lines();
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.comment_lines() - solutionA.comment_lines()) << std::noshowpos;
+		std::cout << '\n';
+		
+		std::size_t longest = 0;
+
+		for (auto&& project : solutionA.projects_view())
+		{
+			longest = std::max(longest, project.name.length());
+
+			for (auto&& file : project.files_view())
+			{
+				longest = std::max(longest, file.first.length());
+			}
+		}
 
 		std::cout << "\n\n";
-		std::cout << "Difference\n\n";
-		std::cout << "Projects:       " << std::showpos << (solutionB.total_projects() - solutionA.total_projects()) << '\n';
-		std::cout << "Files:          " << std::showpos << (solutionB.total_files() - solutionA.total_files()) << '\n';
-		std::cout << "Lines:          " << std::showpos << (solutionB.total_lines() - solutionA.total_lines()) << '\n';
-		std::cout << "Blank Lines:    " << std::showpos << (solutionB.blank_lines() - solutionA.blank_lines()) << '\n';
-		std::cout << "Comment Lines:  " << std::showpos << (solutionB.comment_lines() - solutionA.comment_lines()) << '\n';
-		std::cout << std::noshowpos;
+		std::cout << std::left << std::setw(longest) << std::setfill(' ') << ' ';
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Before";// solutionA.name;
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "After";// solutionB.name;
+		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Difference";
+		std::cout << '\n';
+
+		for (auto&& project : solutionA.projects_view())
+		{
+			std::cout << '\n';
+			std::cout << std::left << std::setw(longest) << project.name;
+			std::cout << '\n';
+
+			for (auto&& file : project.files_view())
+			{
+				std::cout << std::left << std::setw(longest) << file.first;
+				std::cout << '\n';
+			}
+		}
 	}
 	else if (std::string(argv[1]) == "--compare-projects")
 	{
@@ -290,7 +395,7 @@ int main(int argc, char** argv)
 	}
 	else if (std::string(argv[1]) == "--single-project")
 	{
-
+		//parse_project()
 	}
 
 	auto clock_now = std::chrono::system_clock::now();
@@ -324,8 +429,7 @@ Solution parse_solution(std::string_view name, std::istream& solution_file, cons
 			project_file = project_file.substr(2, project_file.size() - 3);
 			project_uuid = project_uuid.substr(3, project_uuid.size() - 5);
 
-			if (verbose)
-				std::cout << "Found project: " << project_name << " in file: " << project_file << " with GUID: " << project_uuid << '\n';
+			//if (verbose) std::cout << "Found project: " << project_name << " in file: " << project_file << " with GUID: " << project_uuid << '\n';
 
 			// read the filters file to see which files we need to count for this project
 
@@ -372,7 +476,7 @@ Project parse_project(std::string_view name, std::istream& project_filters, cons
 			{
 				path = project_path.parent_path().string() + "/" + file_name;
 			}
-			project.files.emplace_back(path);
+			project.file_paths.emplace_back(path);
 		}
 	}
 	return project;
