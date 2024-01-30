@@ -132,6 +132,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="project.cpp" />
+    <ClCompile Include="solution.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="project.h" />
+    <ClInclude Include="solution.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
