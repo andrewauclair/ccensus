@@ -13,8 +13,6 @@
 #include <algorithm>
 #include <map>
 
-
-
 /*
 * add arguments. I would like a way for this to run in an entire folder, finding any solutions in it and parsing those.
 * --verbose to print extra into to the console
@@ -43,6 +41,7 @@ int main(int argc, char** argv)
 	{
 		return -1;
 	}
+
 
 	auto clock_start = std::chrono::system_clock::now();
 
