@@ -61,10 +61,10 @@ struct Solution
 	}
 };
 
-Solution parse_solution(std::string_view name, std::istream& file, const std::filesystem::path& parent_path, bool verbose);
+Solution parse_solution(std::string_view name, std::istream& solution_file, const std::filesystem::path& solution_path, bool verbose);
 
-void process_solution(std::filesystem::path solution);
+inline void process_solution(std::filesystem::path solution) {}
 
-void compare_solutions(std::filesystem::path solutionA, std::filesystem::path solutionB);
+inline void compare_solutions(std::filesystem::path solutionA, std::filesystem::path solutionB) {}
 
 #endif
