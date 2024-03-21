@@ -13,11 +13,6 @@ Project parse_project(std::string_view name, std::istream& project_filters, cons
 			auto last = line.find_last_of('"');
 			std::string file_name = line.substr(first + 1, last - first - 1);
 
-			if (!file_name.ends_with(".h") && !file_name.ends_with(".cpp"))
-			{
-				continue;
-			}
-
 			auto path = std::filesystem::path(file_name);
 
 			if (!path.is_absolute())
