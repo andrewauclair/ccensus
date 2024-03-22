@@ -40,7 +40,7 @@ inline Block_Comment_Type is_opening_block_comment(std::string_view string)
 
 	for (auto ch : string)
 	{
-		if (!in_quotes && (ch == '\'' || ch == '"')) in_quotes = true;
+		if (type == Block_Comment_Type::None && !in_quotes && (ch == '\'' || ch == '"')) in_quotes = true;
 		else if (in_quotes && (ch == '\'' || ch == '"') && prev_ch != '\\') in_quotes = false;
 		else if (!in_quotes && prev_ch == '/' && ch == '*') type = Block_Comment_Type::Opening;
 		else if (!in_quotes && prev_ch == '*' && ch == '/') type = Block_Comment_Type::Inline_Comment;
@@ -65,6 +65,49 @@ inline bool is_closing_block_comment(std::string_view string)
 	}
 
 	return false;
+}
+
+inline bool is_code_and_comment(std::string_view string)
+{
+	auto type = is_opening_block_comment(string);
+	if (!is_single_comment(string) && type == Block_Comment_Type::None && !is_closing_block_comment(string))
+	{
+		return false;
+	}
+
+	bool non_whitespace = false;
+	bool ignore = false;
+	char prev_ch = ' ';
+
+	for (auto ch : string)
+	{
+		if (ch != ' ' && ch != '\t' && ch != '/' && ch != '*' && !ignore)
+		{
+			non_whitespace = true;
+		}
+
+		if (!ignore && prev_ch == '/' && ch == '/')
+		{
+			return non_whitespace;
+		}
+
+		if (!ignore && prev_ch == '/' && ch == '*' && type == Block_Comment_Type::Opening)
+		{
+			return non_whitespace;
+		}
+		
+		if (!ignore && prev_ch == '/' && ch == '*')
+		{
+			ignore = true;
+		}
+		else if (ignore && prev_ch == '*' && ch == '/')
+		{
+			ignore = false;
+		}
+		
+		prev_ch = ch;
+	}
+	return non_whitespace;
 }
 
 #endif

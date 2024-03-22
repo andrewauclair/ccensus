@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS // test
 
 #include "project.h"
 #include "solution.h"
@@ -32,6 +32,7 @@
 // --single-solution <solution>
 // --single-project <project>
 //
+// --detail <file | project>
 // by default output is in a table in the console, to format as csv for dumping to a file and opening in excel, append --csv 
 
 //				Total Lines		Total Lines w/ dependencies		   Code Lines
@@ -71,8 +72,8 @@ int main(int argc, char** argv)
 		auto solutionA = parse_solution(solutionA_path.filename().string(), solutionA_file, solutionA_path, verbose);
 		auto solutionB = parse_solution(solutionB_path.filename().string(), solutionB_file, solutionB_path, verbose);
 
-		solutionA.process_files();
-		solutionB.process_files();
+		solutionA.process_files(verbose);
+		solutionB.process_files(verbose);
 
 		//						A			B		Difference
 		// Total Projects		2			3			+1
@@ -195,7 +196,7 @@ int main(int argc, char** argv)
 
 		auto solution = parse_solution(solution_path.filename().string(), solution_file, solution_path, verbose);
 
-		solution.process_files();
+		solution.process_files(verbose);
 
 		std::cout << "Solution " << solution.name << '\n';
 		std::cout << "Total Projects: " << solution.total_projects() << '\n';

@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <map>
 #include <fstream>
+#include <iostream>
 
 struct LineCounts
 {
@@ -15,6 +16,16 @@ struct LineCounts
 	std::int64_t code_and_comment_lines = 0;
 	std::int64_t comment_lines = 0;
 	std::int64_t blank_lines = 0;
+
+	std::int64_t physical_lines() const
+	{
+		auto count = total_lines;
+
+		count -= blank_lines;
+		count -= comment_lines - code_and_comment_lines;
+
+		return count;
+	}
 
 	void operator+=(const LineCounts& counts)
 	{
@@ -51,7 +62,7 @@ struct Project
 		return files;
 	}
 
-	void process_files()
+	void process_files(bool verbose)
 	{
 		std::sort(file_paths.begin(), file_paths.end());
 
@@ -76,9 +87,14 @@ struct Project
 						file_counts.blank_lines++;
 					}
 
-					if (is_single_comment(line))
+					if (is_single_comment(line) || is_opening_block_comment(line) == Block_Comment_Type::Inline_Comment)
 					{
 						file_counts.comment_lines++;
+					}
+
+					if (is_code_and_comment(line))
+					{
+						file_counts.code_and_comment_lines++;
 					}
 				}
 
@@ -99,6 +115,10 @@ struct Project
 				}
 			}
 
+			if (verbose)
+			{
+				std::cout << file_path.filename() << " " << file_counts.total_lines << " " << file_counts.physical_lines() << '\n';
+			}
 			files[file_path.filename().string()] = file_counts;
 			counts += file_counts;
 		}

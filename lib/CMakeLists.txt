@@ -1,4 +1,5 @@
 ﻿add_library (lines_of_code_lib STATIC 
+	include/utils.h
 	include/project.h
 	include/solution.h
 	src/lib.cpp

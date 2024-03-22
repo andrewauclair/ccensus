@@ -17,11 +17,11 @@ struct Solution
 	{
 	}
 
-	void process_files()
+	void process_files(bool verbose)
 	{
 		for (auto&& project : projects)
 		{
-			project.second.process_files();
+			project.second.process_files(verbose);
 		}
 	}
 
