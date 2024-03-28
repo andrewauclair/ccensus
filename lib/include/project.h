@@ -117,7 +117,7 @@ struct Project
 
 			if (verbose)
 			{
-				std::cout << file_path.filename() << " " << file_counts.total_lines << " " << file_counts.physical_lines() << '\n';
+				//std::cout << file_path.filename() << " " << file_counts.total_lines << " " << file_counts.physical_lines() << '\n';
 			}
 			files[file_path.filename().string()] = file_counts;
 			counts += file_counts;

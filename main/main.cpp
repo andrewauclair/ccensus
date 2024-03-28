@@ -2,6 +2,7 @@
 
 #include "project.h"
 #include "solution.h"
+#include "lib.h"
 
 #include <fstream>
 #include <string>
@@ -190,7 +191,7 @@ int main(int argc, char** argv)
 	}
 	else if (std::string(argv[1]) == "--single-solution")
 	{
-		std::ifstream solution_file(argv[2]);
+		/*std::ifstream solution_file(argv[2]);
 
 		std::filesystem::path solution_path = std::filesystem::path(argv[2]).parent_path();
 
@@ -203,7 +204,8 @@ int main(int argc, char** argv)
 		std::cout << "Total Files:    " << solution.total_files() << '\n';
 		std::cout << "Total Lines:    " << solution.total_lines() << '\n';
 		std::cout << "Blank Lines:    " << solution.blank_lines() << '\n';
-		std::cout << "Comment Lines:  " << solution.comment_lines() << '\n';
+		std::cout << "Comment Lines:  " << solution.comment_lines() << '\n';*/
+		single_solution(argv[2], OutputType::Console, OutputDetail::Files);
 	}
 	else if (std::string(argv[1]) == "--single-project")
 	{

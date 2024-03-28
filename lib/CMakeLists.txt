@@ -2,6 +2,7 @@
 	include/utils.h
 	include/project.h
 	include/solution.h
+	include/lib.h
 	src/lib.cpp
 	src/project.cpp
 	src/solution.cpp
