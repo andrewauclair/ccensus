@@ -63,8 +63,8 @@ struct Solution
 
 Solution parse_solution(std::string_view name, std::istream& solution_file, const std::filesystem::path& solution_path, bool verbose);
 
-inline void process_solution(std::filesystem::path solution) {}
-
-inline void compare_solutions(std::filesystem::path solutionA, std::filesystem::path solutionB) {}
+//inline void process_solution(std::filesystem::path solution) {}
+//
+//inline void compare_solutions(std::filesystem::path solutionA, std::filesystem::path solutionB) {}
 
 #endif

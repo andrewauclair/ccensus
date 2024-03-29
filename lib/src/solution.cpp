@@ -25,6 +25,7 @@ Solution parse_solution(std::string_view name, std::istream& solution_file, cons
 			std::getline(iss, project_file, ',');
 			std::getline(iss, project_uuid, ',');
 
+			// remove quotes
 			project_name = project_name.substr(2, project_name.size() - 3);
 			project_file = project_file.substr(2, project_file.size() - 3);
 			project_uuid = project_uuid.substr(3, project_uuid.size() - 5);

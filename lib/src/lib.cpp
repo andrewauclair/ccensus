@@ -6,6 +6,12 @@
 #include <filesystem>
 #include <ranges>
 
+
+
+
+
+
+
 std::int64_t width_for_value(std::int64_t value)
 {
 	std::int64_t width = 1;
@@ -76,8 +82,10 @@ void compare_solutions(const std::string& solution_a, const std::string& solutio
 	// Comment Lines:
 
 	const int first_column_spacing = 16;
-	const int spacing = 14;
+	const int spacing = std::max((std::int64_t)14, width_for_values(solutionA.total_projects(), solutionA.total_files(), solutionA.total_lines()));
 
+	std::cout << "Before = " << solutionA_path << '\n';
+	std::cout << "After  = " << solutionB_path << '\n';
 	std::cout << "\n\n";
 	std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << ' ';
 	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Before";// solutionA.name;
