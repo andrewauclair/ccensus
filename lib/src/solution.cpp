@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-Solution parse_solution(std::string_view name, std::istream& solution_file, const std::filesystem::path& solution_path, bool verbose)
+Solution parse_solution(std::string_view name, std::istream& solution_file, const std::filesystem::path& solution_path)
 {
 	auto solution = Solution(std::string(name));
 	std::string line;
@@ -30,8 +30,6 @@ Solution parse_solution(std::string_view name, std::istream& solution_file, cons
 			project_file = project_file.substr(2, project_file.size() - 3);
 			project_uuid = project_uuid.substr(3, project_uuid.size() - 5);
 
-			//if (verbose) std::cout << "Found project: " << project_name << " in file: " << project_file << " with GUID: " << project_uuid << '\n';
-
 			// read the filters file to see which files we need to count for this project
 
 			std::filesystem::path project_path = project_file;
@@ -47,7 +45,7 @@ Solution parse_solution(std::string_view name, std::istream& solution_file, cons
 				continue;
 			}
 
-			solution.projects[project_name] = parse_project(project_name, project_filters, project_path, verbose);
+			solution.projects[project_name] = parse_project(project_name, project_filters, project_path);
 		}
 	}
 	return solution;

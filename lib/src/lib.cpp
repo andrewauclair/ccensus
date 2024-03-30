@@ -168,19 +168,17 @@ struct Table {
 
 void compare_solutions(const std::string& solution_a, const std::string& solution_b, OutputType outputType, OutputDetail outputDetail)
 {
-	bool verbose = false;
-
 	std::ifstream solutionA_file(solution_a);
 	std::ifstream solutionB_file(solution_b);
 
 	std::filesystem::path solutionA_path = std::filesystem::path(solution_a).parent_path();
 	std::filesystem::path solutionB_path = std::filesystem::path(solution_b).parent_path();
 
-	auto solutionA = parse_solution(solutionA_path.filename().string(), solutionA_file, solutionA_path, verbose);
-	auto solutionB = parse_solution(solutionB_path.filename().string(), solutionB_file, solutionB_path, verbose);
+	auto solutionA = parse_solution(solutionA_path.filename().string(), solutionA_file, solutionA_path);
+	auto solutionB = parse_solution(solutionB_path.filename().string(), solutionB_file, solutionB_path);
 
-	solutionA.process_files(verbose);
-	solutionB.process_files(verbose);
+	solutionA.process_files();
+	solutionB.process_files();
 
 	//						A			B		Difference
 	// Total Projects		2			3			+1
@@ -278,15 +276,13 @@ void compare_solutions(const std::string& solution_a, const std::string& solutio
 
 void single_solution(const std::string& solution_name, OutputType outputType, OutputDetail outputDetail)
 {
-	bool verbose = false;
-
 	std::ifstream solution_file(solution_name);
 
 	std::filesystem::path solution_path = std::filesystem::path(solution_name).parent_path();
 
-	auto solution = parse_solution(solution_path.filename().string(), solution_file, solution_path, verbose);
+	auto solution = parse_solution(solution_path.filename().string(), solution_file, solution_path);
 
-	solution.process_files(verbose);
+	solution.process_files();
 
 	std::cout << "Solution " << solution.name << "\n\n";
 	

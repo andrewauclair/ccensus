@@ -5,14 +5,14 @@
 
 enum OutputType
 {
-	Console,
+	CONSOLE,
 	CSV
 };
 
 enum OutputDetail
 {
-	Files,
-	Projects,
+	FILES,
+	PROJECTS,
 	ONLY_DIFFS
 };
 

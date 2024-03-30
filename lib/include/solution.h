@@ -17,11 +17,11 @@ struct Solution
 	{
 	}
 
-	void process_files(bool verbose)
+	void process_files()
 	{
 		for (auto&& project : projects)
 		{
-			project.second.process_files(verbose);
+			project.second.process_files();
 		}
 	}
 
@@ -68,7 +68,7 @@ struct Solution
 	}
 };
 
-Solution parse_solution(std::string_view name, std::istream& solution_file, const std::filesystem::path& solution_path, bool verbose);
+Solution parse_solution(std::string_view name, std::istream& solution_file, const std::filesystem::path& solution_path);
 
 //inline void process_solution(std::filesystem::path solution) {}
 //

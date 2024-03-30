@@ -62,7 +62,7 @@ struct Project
 		return files;
 	}
 
-	void process_files(bool verbose)
+	void process_files()
 	{
 		std::sort(file_paths.begin(), file_paths.end());
 
@@ -115,10 +115,6 @@ struct Project
 				}
 			}
 
-			if (verbose)
-			{
-				//std::cout << file_path.filename() << " " << file_counts.total_lines << " " << file_counts.physical_lines() << '\n';
-			}
 			files[file_path.filename().string()] = file_counts;
 			counts += file_counts;
 		}
@@ -127,6 +123,6 @@ struct Project
 	std::int64_t total_files() const { return files.size(); }
 };
 
-Project parse_project(std::string_view name, std::istream& file, const std::filesystem::path& solution_path, bool verbose);
+Project parse_project(const std::string& name, std::istream& file, const std::filesystem::path& solution_path);
 
 #endif

@@ -57,13 +57,13 @@ int main(int argc, char** argv)
 			return -1;
 		}
 
-		OutputDetail outputDetail = OutputDetail::Files;
+		OutputDetail outputDetail = OutputDetail::FILES;
 
 		if (argc >= 5 && std::string(argv[4]) == "--detail-only-diffs")
 		{
 			outputDetail = OutputDetail::ONLY_DIFFS;
 		}
-		compare_solutions(argv[2], argv[3], OutputType::Console, outputDetail);
+		compare_solutions(argv[2], argv[3], OutputType::CONSOLE, outputDetail);
 	}
 	else if (std::string(argv[1]) == "--compare-projects")
 	{
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	}
 	else if (std::string(argv[1]) == "--single-solution")
 	{
-		single_solution(argv[2], OutputType::Console, OutputDetail::Files);
+		single_solution(argv[2], OutputType::CONSOLE, OutputDetail::FILES);
 	}
 	else if (std::string(argv[1]) == "--single-project")
 	{

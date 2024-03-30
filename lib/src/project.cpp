@@ -1,8 +1,8 @@
 #include "project.h"
 
-Project parse_project(std::string_view name, std::istream& project_filters, const std::filesystem::path& project_path, bool verbose)
+Project parse_project(const std::string& name, std::istream& project_filters, const std::filesystem::path& project_path)
 {
-	auto project = Project(std::string(name));
+	auto project = Project(name);
 	std::string line;
 
 	while (std::getline(project_filters, line))
