@@ -5,17 +5,59 @@
 #include <fstream>
 #include <filesystem>
 #include <ranges>
+#include <variant>
+#include <array>
 
+struct FileDiffs {
+	std::optional<LineCounts> before;
+	std::optional<LineCounts> after;
+};
+struct ProjectDiffs {
+	std::map<std::string, FileDiffs> diffs;
 
+	std::optional<LineCounts> before_totals() const
+	{
+		LineCounts counts;
+		bool has_any = false;
+		for (auto&& diffs : std::views::values(diffs))
+		{
+			if (diffs.before.has_value()) has_any = true;
+			counts += diffs.before.value_or(LineCounts());
+		}
+		if (!has_any)
+		{
+			return std::nullopt;
+		}
+		return counts;
+	}
 
-
-
-
+	std::optional<LineCounts> after_totals() const
+	{
+		LineCounts counts;
+		bool has_any = false;
+		for (auto&& diffs : std::views::values(diffs))
+		{
+			if (diffs.after.has_value()) has_any = true;
+			counts += diffs.after.value_or(LineCounts());
+		}
+		if (!has_any)
+		{
+			return std::nullopt;
+		}
+		return counts;
+	}
+};
 
 std::int64_t width_for_value(std::int64_t value)
 {
 	std::int64_t width = 1;
 	std::int64_t temp = 1;
+
+	if (value < 0)
+	{
+		width++;
+		value = std::abs(value);
+	}
 
 	while (temp < value)
 	{
@@ -24,6 +66,102 @@ std::int64_t width_for_value(std::int64_t value)
 	}
 	return width;
 }
+
+template<std::size_t Size>
+struct Row {
+	std::array<std::variant<std::string, std::int64_t>, Size> cells{};
+};
+
+template<std::size_t Size>
+struct Table {
+	std::vector<Row<Size>> rows;
+	std::array<std::int64_t, Size> minimum_column_widths{};
+	std::array<bool, Size> set_showpos{};
+
+	template<typename T, typename... Args>
+	void insert_row(T value, Args... values)
+	{
+		auto& row = rows.emplace_back();
+		row.cells = { value, values... };
+	}
+
+	std::array<std::int64_t, Size> calculate_column_widths() const
+	{
+		std::array<std::int64_t, Size> widths = minimum_column_widths;
+
+		for (auto&& row : rows)
+		{
+			std::size_t column = 0;
+			std::int64_t width = 0;
+
+			for (auto&& cell : row.cells)
+			{
+				std::visit([&width](auto&& arg)
+					{
+						using T = std::decay_t<decltype(arg)>;
+
+						if constexpr (std::is_same_v<T, std::string>)
+						{
+							width = arg.length();
+						}
+						else if constexpr (std::is_same_v<T, std::int64_t>)
+						{
+							width = width_for_value(arg);
+						}
+					}, cell);
+
+				widths[column] = std::max(widths[column], width + 3);
+				column++;
+			}
+		}
+
+		return widths;
+	}
+
+	friend std::ostream& operator<<(std::ostream& out, const Table<Size>& table)
+	{
+		const auto widths = table.calculate_column_widths();
+
+		for (auto&& row : table.rows)
+		{
+			std::size_t column = 0;
+
+			for (auto&& cell : row.cells)
+			{
+				std::visit([&](auto&& arg)
+					{
+						if (column == 0)
+						{
+							out << std::left;
+						}
+						else
+						{
+							out << std::right;
+						}
+						table.set_showpos[column] ? out << std::showpos : out << std::noshowpos;
+						out << std::setw(widths[column]);
+
+						using T = std::decay_t<decltype(arg)>;
+
+						if constexpr (std::is_same_v<T, std::int64_t>)
+						{
+							out << std::format(std::locale("en_US.UTF-8"), "{:L}", arg);
+						}
+						else
+						{
+							out << arg;
+						}
+					}, cell);
+				column++;
+			}
+			out << '\n';
+		}
+		return out;
+	}
+};
+
+
+
 
 std::int64_t width_for_values(auto value, auto... values)
 {
@@ -54,12 +192,6 @@ std::int64_t longest_string(auto view)
 
 void compare_solutions(const std::string& solution_a, const std::string& solution_b, OutputType outputType, OutputDetail outputDetail)
 {
-	/*bool display_details = false;
-
-	if (argc > 4 && std::string_view(argv[4]) == "--display-details")
-	{
-		display_details = true;
-	}*/
 	bool verbose = false;
 
 	std::ifstream solutionA_file(solution_a);
@@ -87,99 +219,82 @@ void compare_solutions(const std::string& solution_a, const std::string& solutio
 	std::cout << "Before = " << solutionA_path << '\n';
 	std::cout << "After  = " << solutionB_path << '\n';
 	std::cout << "\n\n";
-	std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << ' ';
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Before";// solutionA.name;
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "After";// solutionB.name;
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Difference";
-	std::cout << '\n';
 
-	std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Total Projects: ";
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.total_projects();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.total_projects();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.total_projects() - solutionA.total_projects()) << std::noshowpos;
-	std::cout << '\n';
+	Table<4> summary;
+	summary.set_showpos[3] = true; // show difference with std::showpos
+	summary.insert_row("", "Before", "After", "Difference");
+	summary.insert_row("Projects", solutionA.total_projects(), solutionB.total_projects(), solutionB.total_projects() - solutionA.total_projects());
+	summary.insert_row("Files", solutionA.total_files(), solutionB.total_files(), solutionB.total_files() - solutionA.total_files());
+	summary.insert_row("Total Lines", solutionA.total_lines(), solutionB.total_lines(), solutionB.total_lines() - solutionA.total_lines());
+	summary.insert_row("Physical Lines", solutionA.physical_lines(), solutionB.physical_lines(), solutionB.physical_lines() - solutionA.physical_lines());
+	summary.insert_row("", "", "", "");
+	summary.insert_row("", "", "", "");
+	summary.insert_row("", "", "", "");
 
-	std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Total Files: ";
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.total_files();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.total_files();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.total_files() - solutionA.total_files()) << std::noshowpos;
-	std::cout << '\n';
-
-	std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Total Lines: ";
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.total_lines();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.total_lines();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.total_lines() - solutionA.total_lines()) << std::noshowpos;
-	std::cout << '\n';
-
-	std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Blank Lines: ";
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.blank_lines();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.blank_lines();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.blank_lines() - solutionA.blank_lines()) << std::noshowpos;
-	std::cout << '\n';
-
-	std::cout << std::left << std::setw(first_column_spacing) << std::setfill(' ') << "Comment Lines: ";
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionA.comment_lines();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << solutionB.comment_lines();
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << std::showpos << (solutionB.comment_lines() - solutionA.comment_lines()) << std::noshowpos;
-	std::cout << '\n';
-
-	std::size_t longest = 0;
+	std::map<std::string, ProjectDiffs> project_diffs;
 
 	for (auto&& project : solutionA.projects_view())
 	{
-		longest = std::max(longest, project.second.name.length());
+		auto& diffs = project_diffs[project.first];
 
-		for (auto&& file : project.second.files_view())
+		for (auto&& [file, counts] : project.second.files_view())
 		{
-			longest = std::max(longest, file.first.length());
+			auto& file_diffs = diffs.diffs[file];
+
+			file_diffs.before = counts;
 		}
 	}
 
-	std::cout << "\n\n";
-	std::cout << std::left << std::setw(longest) << std::setfill(' ') << "Modified";
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Before";// solutionA.name;
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "After";// solutionB.name;
-	std::cout << std::right << std::setw(spacing) << std::setfill(' ') << "Difference";
-	std::cout << '\n';
-
-	std::vector<std::string> deleted;
-	std::vector<std::string> added;
-
-	for (auto&& project : solutionA.projects_view())
+	for (auto&& project : solutionB.projects_view())
 	{
-		auto projectB = solutionB.projects_view().find(project.first);
+		auto& diffs = project_diffs[project.first];
 
-		std::cout << '\n';
-		std::cout << std::left << std::setw(longest) << project.second.name;
-
-		std::cout << std::right << std::setw(spacing) << std::setfill(' ') << project.second.counts.total_lines;
-
-		if (projectB != solutionB.projects_view().end())
+		for (auto&& [file, counts] : project.second.files_view())
 		{
-			std::cout << std::right << std::setw(spacing) << std::setfill(' ') << projectB->second.counts.total_lines;
+			auto& file_diffs = diffs.diffs[file];
+
+			file_diffs.after = counts;
 		}
+	}
 
-		std::cout << '\n';
-
-		for (auto&& file : project.second.files_view())
+	const auto build_row = [&summary](const std::string& name, std::optional<LineCounts> before, std::optional<LineCounts> after)
 		{
+			std::variant<std::string, std::int64_t> before_lines = "";
+			std::variant<std::string, std::int64_t> after_lines = "";
+			std::variant<std::string, std::int64_t> total_diff = "";
 
-			std::cout << std::left << std::setw(longest) << file.first;
-			std::cout << std::right << std::setw(spacing) << std::setfill(' ') << file.second.total_lines;
-
-			if (projectB != solutionB.projects_view().end())
+			if (before) before_lines = before.value().total_lines;
+			if (after) after_lines = after.value().total_lines;
+			if (before && after)
 			{
-				auto fileB = projectB->second.files.find(file.first);
-
-				if (fileB != projectB->second.files.end())
-				{
-					std::cout << std::right << std::setw(spacing) << std::setfill(' ') << fileB->second.total_lines;
-				}
+				total_diff = after.value().total_lines - before.value().total_lines;
 			}
+			else if (before)
+			{
+				total_diff = -before.value().total_lines;
+			}
+			else if (after)
+			{
+				total_diff = after.value().total_lines;
+			}
+			summary.insert_row(name, before_lines, after_lines, total_diff);
+		};
 
-			std::cout << '\n';
+	for (auto&& [project, diffs] : project_diffs)
+	{
+		build_row(project, diffs.before_totals(), diffs.after_totals());
+		summary.insert_row("", "", "", "");
+
+		for (auto&& [file, file_diffs] : diffs.diffs)
+		{
+			build_row(file, file_diffs.before, file_diffs.after);
 		}
+		summary.insert_row("", "", "", "");
+		summary.insert_row("", "", "", "");
 	}
+
+	std::cout << summary;
+	std::cout << "\n\n\n";
 }
 
 void single_solution(const std::string& solution_name, OutputType outputType, OutputDetail outputDetail)
@@ -194,16 +309,14 @@ void single_solution(const std::string& solution_name, OutputType outputType, Ou
 
 	solution.process_files(verbose);
 
-	std::cout << "Solution " << solution.name << '\n';
+	std::cout << "Solution " << solution.name << "\n\n";
 	
-	auto width = width_for_values(solution.total_projects(), solution.total_files(), solution.total_lines(), solution.blank_lines(), solution.comment_lines());
+	Table<2> summary;
+	summary.insert_row("Total Projects", solution.total_projects());
+	summary.insert_row("Total Files", solution.total_files());
+	summary.insert_row("Total Lines", solution.total_lines());
 
-	std::cout << "Total Projects: " << std::setw(width) << std::right << solution.total_projects() << '\n';
-	std::cout << "Total Files:    " << std::setw(width) << std::right << solution.total_files() << '\n';
-	std::cout << "Total Lines:    " << std::setw(width) << std::right << solution.total_lines() << '\n';
-	std::cout << "Blank Lines:    " << std::setw(width) << std::right << solution.blank_lines() << '\n';
-	std::cout << "Comment Lines:  " << std::setw(width) << std::right << solution.comment_lines() << '\n';
-	std::cout << "\n\n";
+	std::cout << summary << "\n\n\n";
 
 	for (auto&& project : std::views::values(solution.projects))
 	{
@@ -213,26 +326,14 @@ void single_solution(const std::string& solution_name, OutputType outputType, Ou
 		}
 		std::cout << "Project: " << project.name << "\n\n";
 
-		auto longest_file_name = longest_string(std::views::keys(project.files));
-		auto longest_total_lines = width_for_values(std::views::values(project.files) | std::views::transform([](const LineCounts& lines) { return lines.total_lines; }));
-		auto longest_physical_lines = width_for_values(std::views::values(project.files) | std::views::transform([](const LineCounts& lines) { return lines.physical_lines(); }));
-
-		longest_file_name = std::max(longest_file_name, (std::int64_t)9);
-		longest_total_lines = std::max(longest_total_lines, (std::int64_t)5);
-		longest_physical_lines = std::max(longest_physical_lines, (std::int64_t)5);
-
-		std::cout << std::left << std::setw(longest_file_name) << "File Name" 
-			<< std::right << std::setw(longest_total_lines) << "   TLOC " 
-			<< std::right << std::setw(longest_physical_lines) << "  PLOC\n";
+		Table<3> project_out;
+		project_out.insert_row("File Name", "TLOC", "PLOC");
 
 		for (auto&& [file_name, file_counts] : project.files)
 		{
-			std::cout << std::left << std::setw(longest_file_name) << file_name << "  "
-				<< std::right << std::setw(longest_total_lines) << file_counts.total_lines << "  "
-				<< std::right << std::setw(longest_physical_lines) << file_counts.physical_lines()
-				<< '\n';
+			project_out.insert_row(file_name, file_counts.total_lines, file_counts.physical_lines());
 		}
-		std::cout << "\n\n";
+		std::cout << project_out << "\n\n\n";
 	}
 }
 

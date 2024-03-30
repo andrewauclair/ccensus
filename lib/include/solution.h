@@ -46,6 +46,13 @@ struct Solution
 		return total;
 	}
 
+	std::int64_t physical_lines() const
+	{
+		std::int64_t total = 0;
+		for (auto&& project : projects) total += project.second.counts.physical_lines();
+		return total;
+	}
+
 	std::int64_t blank_lines() const
 	{
 		std::int64_t total = 0;
