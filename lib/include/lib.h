@@ -12,7 +12,8 @@ enum OutputType
 enum OutputDetail
 {
 	Files,
-	Projects
+	Projects,
+	ONLY_DIFFS
 };
 
 void compare_solutions(const std::string& solution_a, const std::string& solution_b, OutputType outputType, OutputDetail outputDetail);

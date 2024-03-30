@@ -138,14 +138,20 @@ struct Table {
 						{
 							out << std::right;
 						}
-						table.set_showpos[column] ? out << std::showpos : out << std::noshowpos;
 						out << std::setw(widths[column]);
-
+						
 						using T = std::decay_t<decltype(arg)>;
 
 						if constexpr (std::is_same_v<T, std::int64_t>)
 						{
-							out << std::format(std::locale("en_US.UTF-8"), "{:L}", arg);
+							if (table.set_showpos[column])
+							{
+								out << std::format(std::locale("en_US.UTF-8"), "{:+L}", arg);
+							}
+							else
+							{
+								out << std::format(std::locale("en_US.UTF-8"), "{:L}", arg);
+							}
 						}
 						else
 						{
@@ -159,36 +165,6 @@ struct Table {
 		return out;
 	}
 };
-
-
-
-
-std::int64_t width_for_values(auto value, auto... values)
-{
-	return std::max({ width_for_value(value), width_for_value(values)... });
-}
-
-std::int64_t width_for_values(auto view)
-{
-	std::int64_t max = 0;
-
-	for (auto&& v : view)
-	{
-		max = std::max(max, width_for_value(v));
-	}
-	return max;
-}
-
-std::int64_t longest_string(auto view)
-{
-	std::int64_t max = 0;
-
-	for (auto&& v : view)
-	{
-		max = std::max(max, static_cast<std::int64_t>(v.length()));
-	}
-	return max;
-}
 
 void compare_solutions(const std::string& solution_a, const std::string& solution_b, OutputType outputType, OutputDetail outputDetail)
 {
@@ -212,9 +188,6 @@ void compare_solutions(const std::string& solution_a, const std::string& solutio
 	// Total Lines:
 	// Blank Lines:
 	// Comment Lines:
-
-	const int first_column_spacing = 16;
-	const int spacing = std::max((std::int64_t)14, width_for_values(solutionA.total_projects(), solutionA.total_files(), solutionA.total_lines()));
 
 	std::cout << "Before = " << solutionA_path << '\n';
 	std::cout << "After  = " << solutionB_path << '\n';
@@ -257,11 +230,11 @@ void compare_solutions(const std::string& solution_a, const std::string& solutio
 		}
 	}
 
-	const auto build_row = [&summary](const std::string& name, std::optional<LineCounts> before, std::optional<LineCounts> after)
+	const auto build_row = [&summary, &outputDetail](const std::string& name, std::optional<LineCounts> before, std::optional<LineCounts> after)
 		{
 			std::variant<std::string, std::int64_t> before_lines = "";
 			std::variant<std::string, std::int64_t> after_lines = "";
-			std::variant<std::string, std::int64_t> total_diff = "";
+			std::int64_t total_diff = 0;
 
 			if (before) before_lines = before.value().total_lines;
 			if (after) after_lines = after.value().total_lines;
@@ -277,7 +250,13 @@ void compare_solutions(const std::string& solution_a, const std::string& solutio
 			{
 				total_diff = after.value().total_lines;
 			}
-			summary.insert_row(name, before_lines, after_lines, total_diff);
+			std::variant<std::string, std::int64_t> diff = total_diff;
+			if (total_diff == 0) diff = "";
+
+			if (outputDetail != OutputDetail::ONLY_DIFFS || total_diff != 0)
+			{
+				summary.insert_row(name, before_lines, after_lines, diff);
+			}
 		};
 
 	for (auto&& [project, diffs] : project_diffs)
