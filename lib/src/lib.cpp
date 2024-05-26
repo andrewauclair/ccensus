@@ -7,11 +7,13 @@
 #include <ranges>
 #include <variant>
 #include <array>
+#include <format>
 
 struct FileDiffs {
 	std::optional<LineCounts> before;
 	std::optional<LineCounts> after;
 };
+
 struct ProjectDiffs {
 	std::map<std::string, FileDiffs> diffs;
 

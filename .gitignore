@@ -398,3 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 /cmake-build-vs2022
 /TestProjects/cmake-build-vs2022
+/build
