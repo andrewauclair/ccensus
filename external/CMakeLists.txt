@@ -1,5 +1,7 @@
 Include(FetchContent)
 
+Include(FindGnuplot)
+
 cmake_policy(SET CMP0077 NEW)
 
 set(CMAKE_CXX_STANDARD 23)

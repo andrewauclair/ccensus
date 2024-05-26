@@ -87,6 +87,7 @@ int main(int argc, char** argv)
 	{
 		// using cmake-file-api v1 Client Stateless Query Files
 		std::string build_directory = argv[2];
+		std::string reply_directory = build_directory + "/.cmake/api/v1/reply/";
 
 		// write query file to build directory
 		std::filesystem::create_directories(build_directory + "/.cmake/api/v1/query/client-ccensus/");
@@ -130,6 +131,28 @@ int main(int argc, char** argv)
 
 		std::cout << model_file << '\n';
 
+		std::string model_filepath = reply_directory + std::string(std::string_view(model_file));
+		padded_string model_json = padded_string::load(model_filepath);
+
+		ondemand::document model = parser.iterate(model_json);
+
+		auto configurations = model["configurations"];
+
+		for (auto config : configurations)
+		{
+			std::cout << "config: " << config["name"] << '\n';
+
+			auto targets = config["targets"];
+
+			for (auto target : targets)
+			{
+				std::cout << "target: " << target["name"] << '\n';
+			}
+		}
+		
+		auto version = model["version"];
+		std::cout << "codemodel-v2: " << std::int64_t(version["major"]) <<
+			'.' << std::int64_t(version["minor"]) << '\n';
 	}
 
 	auto clock_now = std::chrono::system_clock::now();
