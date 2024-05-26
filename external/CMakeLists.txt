@@ -9,7 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 FetchContent_Declare(
     Catch2
     GIT_SHALLOW    TRUE
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_REPOSITORY https://github.com/catchorg/Catch2
     GIT_TAG        v3.5.3
 )
 
@@ -20,4 +20,11 @@ FetchContent_Declare(
 	GIT_TAG			v.10.13.0
 )
 
-FetchContent_MakeAvailable(Catch2 ApprovalTests.cpp)
+FetchContent_Declare(
+    simdjson
+    GIT_SHALLOW     TRUE
+    GIT_REPOSITORY  https://github.com/simdjson/simdjson
+    GIT_TAG         v3.9.2
+)
+
+FetchContent_MakeAvailable(Catch2 ApprovalTests.cpp simdjson)

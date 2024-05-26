@@ -14,7 +14,8 @@
 #include <algorithm>
 #include <map>
 
-
+#include "simdjson.h"
+using namespace simdjson;
 
 /*
 * add arguments. I would like a way for this to run in an entire folder, finding any solutions in it and parsing those.
@@ -43,6 +44,7 @@ int main(int argc, char** argv)
 {
 	if (argc < 3)
 	{
+		std::cerr << "Not enough arguments\n";
 		return -1;
 	}
 
@@ -80,6 +82,54 @@ int main(int argc, char** argv)
 	else if (std::string(argv[1]) == "--single-project")
 	{
 		//parse_project()
+	}
+	else if (std::string(argv[1]) == "--cmake-project")
+	{
+		// using cmake-file-api v1 Client Stateless Query Files
+		std::string build_directory = argv[2];
+
+		// write query file to build directory
+		std::filesystem::create_directories(build_directory + "/.cmake/api/v1/query/client-ccensus/");
+
+		{
+			std::ofstream(build_directory + "/.cmake/api/v1/query/client-ccensus/codemodel-v2");
+		}
+
+		// run cmake . in the build directory
+		std::system(std::string("(cd " + build_directory + " && cmake .)").c_str());
+
+		// remove the query file now that we're done with it
+		std::filesystem::remove(build_directory + "/.cmake/api/v1/query/client-ccensus/codemodel-v2");
+
+		std::vector<std::filesystem::directory_entry> index_files;
+
+		// read reply json files from build directory
+		for (auto const& dir_entry : std::filesystem::directory_iterator(build_directory + "/.cmake/api/v1/reply/")) 
+		{
+			if (dir_entry.path().filename().string().starts_with("index-"))
+			{
+				index_files.push_back(dir_entry);
+			}
+		}
+
+		// TODO if there are no index files then something is wrong
+
+		std::sort(index_files.begin(), index_files.end(), [](const auto& a, const auto& b) {
+			return a.path().filename() < a.path().filename();
+		});
+
+		auto current_index_file = index_files.back();
+
+		ondemand::parser parser;
+		padded_string index_file_json = padded_string::load(current_index_file.path().string());
+
+		// find our reply
+		ondemand::document index = parser.iterate(index_file_json);
+
+		auto model_file = index["reply"]["client-ccensus"]["codemodel-v2"]["jsonFile"];
+
+		std::cout << model_file << '\n';
+
 	}
 
 	auto clock_now = std::chrono::system_clock::now();
