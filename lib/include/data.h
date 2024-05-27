@@ -37,6 +37,7 @@ struct LineCounts
 
 struct Target
 {
+	std::string id;
     std::string name;
     std::string path;
     std::vector<std::string> include_files;
@@ -50,6 +51,9 @@ struct Target
 	bool is_project = false;
 	
     std::map<std::string, LineCounts> counts;
+
+	std::vector<Target*> target_dependencies;
+	std::vector<std::string> dependency_ids;
 };
 
 struct Package

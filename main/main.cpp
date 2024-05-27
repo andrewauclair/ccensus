@@ -4,6 +4,8 @@
 #include "solution.h"
 #include "lib.h"
 
+#include "cmake.h"
+
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -82,6 +84,14 @@ int main(int argc, char** argv)
 	else if (std::string(argv[1]) == "--single-project")
 	{
 		//parse_project()
+	}
+	else if (std::string(argv[1]) == "--cmake")
+	{
+		std::string build_directory = argv[2];
+
+		auto cmake = CMakeFrontend(build_directory);
+
+		Package package = cmake.parse();
 	}
 	else if (std::string(argv[1]) == "--cmake-project")
 	{

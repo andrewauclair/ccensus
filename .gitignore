@@ -399,3 +399,4 @@ FodyWeavers.xsd
 /cmake-build-vs2022
 /TestProjects/cmake-build-vs2022
 /build
+/.vscode
