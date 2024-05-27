@@ -1,9 +1,12 @@
-﻿project("Lines of Code - App")
+﻿add_executable(ccensus main.cpp empty.cpp)
 
-add_executable(lines_of_code main.cpp empty.cpp)
-
-target_link_libraries(lines_of_code PRIVATE
-	lines_of_code_lib 
+target_link_libraries(ccensus PRIVATE
+	ccensus_lib simdjson
 )
 
-target_link_libraries(lines_of_code PRIVATE simdjson)
+install(TARGETS
+	ccensus
+	RUNTIME
+		COMPONENT Runtime
+	DESTINATION bin
+)

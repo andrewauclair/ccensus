@@ -1,4 +1,4 @@
-﻿add_library (lines_of_code_lib STATIC 
+﻿add_library (ccensus_lib STATIC 
 	include/utils.h
 	include/project.h
 	include/solution.h
@@ -10,6 +10,6 @@
 	src/cmake.cpp
 )
 
-target_include_directories(lines_of_code_lib PUBLIC include)
+target_include_directories(ccensus_lib PUBLIC include)
 
-target_link_libraries(lines_of_code_lib PRIVATE simdjson)
+target_link_libraries(ccensus_lib PRIVATE simdjson)

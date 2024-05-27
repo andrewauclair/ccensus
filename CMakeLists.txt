@@ -2,12 +2,14 @@
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-project("Lines of Code")
+project("ccensus")
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-add_subdirectory(external)
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+
+add_subdirectory(external EXCLUDE_FROM_ALL)
 add_subdirectory(lib)
 add_subdirectory(main)
 add_subdirectory(test)
