@@ -3,7 +3,7 @@
 #include "project.h"
 #include "solution.h"
 #include "lib.h"
-
+#include "backend.h"
 #include "cmake.h"
 
 #include <fstream>
@@ -92,6 +92,11 @@ int main(int argc, char** argv)
 		auto cmake = CMakeFrontend(build_directory);
 
 		Package package = cmake.parse();
+
+		package.process();
+
+		Backend backend;
+		backend.generate_info_output(package, OutputType::CONSOLE);
 	}
 	else if (std::string(argv[1]) == "--cmake-project")
 	{

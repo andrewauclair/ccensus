@@ -139,6 +139,10 @@ Package CMakeFrontend::parse_package(parse_result& json)
 
         Target target = parse_target(source_directory, target_json);
 
+        if (target.is_utility)
+        {
+            continue;
+        }
         target.id = cached_target.id;
 
         package.targets.push_back(std::move(target));
@@ -157,8 +161,6 @@ Package CMakeFrontend::parse_package(parse_result& json)
         }
     }
 
-    std::cout << "total targets in package: " << package.targets.size() << '\n';
-
     std::size_t files = 0;
 
     for (auto&& target : package.targets)
@@ -166,7 +168,7 @@ Package CMakeFrontend::parse_package(parse_result& json)
         files += target.include_files.size();
         files += target.source_files.size();
     }
-    std::cout << "total files in package: " << files << '\n';
+    
     return package;
 }
 
@@ -174,12 +176,15 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
 {
     Target target;
 
-    //target.is_third_party = std::string_view(json.doc["paths"]["build"]).starts_with("_deps");
-
     auto root = json.doc.get_object();
 
     for (auto obj : root)
     {
+        if (obj.key() == "type")
+        {
+            target.is_utility = std::string_view(obj.value()) == "UTILITY";
+        }
+
         if (obj.key() == "paths")
         {
             target.is_third_party = std::string_view(obj.value()["build"]).starts_with("_deps");

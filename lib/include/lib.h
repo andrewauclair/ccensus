@@ -6,7 +6,8 @@
 enum OutputType
 {
 	CONSOLE,
-	CSV
+	CSV,
+	JSON
 };
 
 enum OutputDetail

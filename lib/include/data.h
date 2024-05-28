@@ -50,15 +50,24 @@ struct Target
 	// checks if this target is a cmake project or an executable in VS
 	bool is_project = false;
 	
-    std::map<std::string, LineCounts> counts;
+	// flag to check if this is a cmake utility. we'll skip those targets
+	// TODO skipping utility targets might be an issue if they generate C++ code?
+	bool is_utility = false;
+
+	LineCounts total_counts;
+    std::map<std::string, LineCounts> file_counts;
 
 	std::vector<Target*> target_dependencies;
 	std::vector<std::string> dependency_ids;
+
+	void process();
 };
 
 struct Package
 {
     std::vector<Target> targets;
+
+	void process();
 };
 
 #endif
