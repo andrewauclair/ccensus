@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <string>
+#include <set>
 
 void Backend::generate_info_output(const Package& package, OutputType outputType)
 {
@@ -129,12 +130,22 @@ void Backend::generate_info_console(const Package& package)
             {
                 continue;
             }
-            for (const auto& entry : std::filesystem::directory_iterator(path.path))
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(path.path))
             {
+                if (entry.is_directory())
+                {
+                    continue;
+                }
+                
                 files.push_back(entry.path().string());
             }
         }
         
+        std::set<std::string> file_set;
+        file_set.insert(files.begin(), files.end());
+        files.clear();
+        files.insert(files.end(), file_set.begin(), file_set.end());
+
         std::sort(files.begin(), files.end(), [&target](const std::string& file_a, const std::string& file_b) {
             return target.file_counts.at(file_a).total_lines > target.file_counts.at(file_b).total_lines;
         });

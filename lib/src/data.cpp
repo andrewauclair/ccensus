@@ -2,12 +2,13 @@
 #include "utils.h"
 #include <algorithm>
 #include <fstream>
+#include <set>
 
 void Target::process()
 {
-    std::vector<std::string> files;
-    files.insert(files.end(), include_files.begin(), include_files.end());
-    files.insert(files.end(), source_files.begin(), source_files.end());
+    std::set<std::string> files;
+    files.insert(include_files.begin(), include_files.end());
+    files.insert(source_files.begin(), source_files.end());
 
     for (auto&& path : include_paths)
     {
@@ -15,13 +16,17 @@ void Target::process()
         {
             continue;
         }
-        for (const auto& entry : std::filesystem::directory_iterator(path.path))
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(path.path))
         {
-            files.push_back(entry.path().string());
+            if (entry.is_directory())
+            {
+                continue;
+            }
+            files.insert(entry.path().string());
         }
     }
 
-    std::sort(files.begin(), files.end());
+    // std::sort(files.begin(), files.end());
 
     total_counts = {};
     file_counts = {};
