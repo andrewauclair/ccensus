@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <string>
 #include <map>
+#include <optional>
 
 struct LineCounts
 {
@@ -35,6 +36,20 @@ struct LineCounts
 	}
 };
 
+struct BacktraceNode
+{
+	std::optional<std::uint32_t> command;
+	std::optional<std::uint32_t> file;
+	std::optional<std::uint32_t> line;
+	std::optional<std::uint32_t> parent;
+};
+
+struct IncludePath
+{
+	std::uint32_t backtrace_index;
+	std::string path;
+};
+
 struct Target
 {
 	std::string id;
@@ -42,6 +57,7 @@ struct Target
     std::string path;
     std::vector<std::string> include_files;
     std::vector<std::string> source_files;
+	std::vector<IncludePath> include_paths;
 
 	// not sure we can actually tell if something is 3rd party in VS solutions
 	// but we should be able to do this for cmake
@@ -60,6 +76,21 @@ struct Target
 	std::vector<Target*> target_dependencies;
 	std::vector<std::string> dependency_ids;
 
+	std::vector<std::string> commands;
+	std::vector<std::string> files;
+
+	std::vector<BacktraceNode> backtrace_nodes;
+
+	bool is_node_target_include_directory(std::uint32_t node) const
+	{
+		if (backtrace_nodes.at(node).command)
+		{
+			const auto index = backtrace_nodes.at(node).command.value();
+			
+			return commands.at(index) == "target_include_directories";
+		}
+		return false;
+	}
 	void process();
 };
 

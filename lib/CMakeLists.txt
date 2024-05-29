@@ -1,10 +1,4 @@
-﻿add_library (ccensus_lib STATIC 
-	include/utils.h
-	include/project.h
-	include/solution.h
-	include/lib.h
-	include/cmake.h
-	include/backend.h
+﻿add_library (ccensus_lib STATIC
 	src/lib.cpp
 	src/project.cpp
 	src/solution.cpp

@@ -1,6 +1,9 @@
 #include "backend.h"
+#include "display_utils.h"
+
 #include <iostream>
 #include <algorithm>
+#include <string>
 
 void Backend::generate_info_output(const Package& package, OutputType outputType)
 {
@@ -88,6 +91,9 @@ void Backend::generate_info_console(const Package& package)
         }
     }
 
+    std::cout.imbue(std::locale(""));
+
+    std::cout << "\n\n";
     std::cout << "Total Targets: " << package.targets.size() << '\n';
     std::cout << "Total Files: " << total_files << '\n';
     std::cout << "Total Lines: " << total_lines.total_lines << '\n';
@@ -112,7 +118,60 @@ void Backend::generate_info_console(const Package& package)
 
     std::cout << '\n';
 
-    
+    const auto print_target = [](const Target& target) {
+        std::vector<std::string> files;
+        files.insert(files.end(), target.include_files.begin(), target.include_files.end());
+        files.insert(files.end(), target.source_files.begin(), target.source_files.end());
+
+        for (auto&& path : target.include_paths)
+        {
+            if (!target.is_node_target_include_directory(path.backtrace_index))
+            {
+                continue;
+            }
+            for (const auto& entry : std::filesystem::directory_iterator(path.path))
+            {
+                files.push_back(entry.path().string());
+            }
+        }
+        
+        std::sort(files.begin(), files.end(), [&target](const std::string& file_a, const std::string& file_b) {
+            return target.file_counts.at(file_a).total_lines > target.file_counts.at(file_b).total_lines;
+        });
+
+        Table<3> output;
+        output.insert_row("File Name", "TLOC", "PLOC");
+
+        for (const std::string& file : files)
+        {
+            output.insert_row(file, target.file_counts.at(file).total_lines, target.file_counts.at(file).physical_lines());
+        }
+        std::cout << output;
+    };
+
+    // print each of the 1st party targets
+    for (const Target& target : package.targets)
+    {
+        if (target.is_third_party)
+        {
+            continue;
+        }
+        std::cout << '\n' << "1st Party Target: " << target.name << "\n\n";
+
+        print_target(target);
+    }
+
+    // print each of the 3rd party targets
+    for (const Target& target : package.targets)
+    {
+        if (!target.is_third_party)
+        {
+            continue;
+        }
+        std::cout << '\n' << "3rd Party Target: " << target.name << "\n\n";
+
+        print_target(target);
+    }
 }
 
 void Backend::generate_info_csv(const Package& package)

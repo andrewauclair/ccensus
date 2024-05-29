@@ -9,6 +9,18 @@ void Target::process()
     files.insert(files.end(), include_files.begin(), include_files.end());
     files.insert(files.end(), source_files.begin(), source_files.end());
 
+    for (auto&& path : include_paths)
+    {
+        if (!is_node_target_include_directory(path.backtrace_index))
+        {
+            continue;
+        }
+        for (const auto& entry : std::filesystem::directory_iterator(path.path))
+        {
+            files.push_back(entry.path().string());
+        }
+    }
+
     std::sort(files.begin(), files.end());
 
     total_counts = {};

@@ -180,6 +180,11 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
 
     for (auto obj : root)
     {
+        if (obj.key() == "name")
+        {
+            target.name = std::string_view(obj.value());
+        }
+
         if (obj.key() == "type")
         {
             target.is_utility = std::string_view(obj.value()) == "UTILITY";
@@ -212,6 +217,86 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
                 else
                 {
                     target.source_files.push_back(source_directory + "/" + std::string(path));
+                }
+            }
+        }
+
+        if (obj.key() == "compileGroups")
+        {
+            for (auto group : obj.value().get_array())
+            {
+                for (auto item : group.value().get_object())
+                {
+                    if (item.key() == "includes")
+                    {
+                        for (auto path : item.value().get_array())
+                        {
+                            IncludePath includePath;
+
+                            for (auto path_item : path.value().get_object())
+                            {
+                                if (path_item.key() == "backtrace")
+                                {
+                                    includePath.backtrace_index = path_item.value().get_uint64();
+                                }
+                                if (path_item.key() == "path")
+                                {
+                                    includePath.path = std::string_view(path_item.value());
+                                }
+                            }
+
+                            target.include_paths.push_back(includePath);
+                        }
+                    }
+                }
+            }
+        }
+        if (obj.key() == "backtraceGraph")
+        {
+            for (auto trace : obj.value().get_object())
+            {
+                if (trace.key() == "commands")
+                {
+                    for (auto command : trace.value().get_array())
+                    {
+                        target.commands.emplace_back(std::string_view(command.value()));
+                    }
+                }
+                if (trace.key() == "files")
+                {
+                    for (auto file : trace.value().get_array())
+                    {
+                        target.files.emplace_back(std::string_view(file.value()));
+                    }
+                }
+                if (trace.key() == "nodes")
+                {
+                    for (auto node_obj : trace.value().get_array())
+                    {
+                        BacktraceNode backtrace_node;
+
+                        for (auto node : node_obj.value().get_object())
+                        {
+                            if (node.key() == "command")
+                            {
+                                backtrace_node.command = node.value().get_uint64();
+                            }
+                            if (node.key() == "file")
+                            {
+                                backtrace_node.file = node.value().get_uint64();
+                            }
+                            if (node.key() == "line")
+                            {
+                                backtrace_node.line = node.value().get_uint64();
+                            }
+                            if (node.key() == "parent")
+                            {
+                                backtrace_node.parent = node.value().get_uint64();
+                            }
+                        }
+
+                        target.backtrace_nodes.push_back(backtrace_node);
+                    }
                 }
             }
         }
