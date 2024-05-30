@@ -11,7 +11,10 @@ CMakeFrontend::CMakeFrontend(const std::string& build_directory)
 
 Package CMakeFrontend::parse()
 {
-    query();
+    if (!query())
+    {
+        throw std::runtime_error("Failed to run cmake");
+    }
 
     auto index_file = read_index_file();
     auto model_file = read_model_file(index_file);
@@ -27,7 +30,7 @@ Package CMakeFrontend::parse()
 }
 
 // initialize the cmake file api query
-void CMakeFrontend::query()
+bool CMakeFrontend::query()
 {
     const std::string query_directory = m_build_directory + "/.cmake/api/v1/query/client-ccensus/";
     
@@ -39,7 +42,7 @@ void CMakeFrontend::query()
     }
 
     // run cmake . in the build directory
-    std::system(std::string("(cd " + m_build_directory + " && cmake .)").c_str());
+    return std::system(std::string("(cd " + m_build_directory + " && cmake .)").c_str()) == 0;
 }
 
 parse_result CMakeFrontend::read_index_file()
@@ -214,7 +217,7 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
                 {
                     target.include_files.push_back(source_directory + "/" + std::string(path));
                 }
-                else
+                else if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
                 {
                     target.source_files.push_back(source_directory + "/" + std::string(path));
                 }

@@ -119,7 +119,35 @@ void Backend::generate_info_console(const Package& package)
 
     std::cout << '\n';
 
-    const auto print_target = [](const Target& target) {
+    // print each of the 1st party targets
+    for (const Target& target : package.targets)
+    {
+        if (target.is_third_party)
+        {
+            continue;
+        }
+        std::cout << '\n' << "1st Party Target Totals: " << target.name << "\n\n";
+        std::cout << "Total Files: " << target.files.size() << '\n';
+        std::cout << "Total Lines: " << target.total_counts.total_lines << '\n';
+        std::cout << "Total Physical Lines: " << target.total_counts.physical_lines() << '\n';
+        std::cout << "\n\n";
+    }
+
+    // print each of the 3rd party targets
+    for (const Target& target : package.targets)
+    {
+        if (!target.is_third_party)
+        {
+            continue;
+        }
+        std::cout << '\n' << "3rd Party Target Totals: " << target.name << "\n\n";
+        std::cout << "Total Files: " << target.files.size() << '\n';
+        std::cout << "Total Lines: " << target.total_counts.total_lines << '\n';
+        std::cout << "Total Physical Lines: " << target.total_counts.physical_lines() << '\n';
+        std::cout << "\n\n";
+    }
+
+    const auto print_target_files = [](const Target& target) {
         std::vector<std::string> files;
         files.insert(files.end(), target.include_files.begin(), target.include_files.end());
         files.insert(files.end(), target.source_files.begin(), target.source_files.end());
@@ -137,7 +165,13 @@ void Backend::generate_info_console(const Package& package)
                     continue;
                 }
                 
-                files.push_back(entry.path().string());
+                const auto path = entry.path().string();
+
+                if (path.ends_with(".h") || path.ends_with(".hpp") ||
+                    path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
+                {
+                    files.push_back(entry.path().string());
+                }
             }
         }
         
@@ -167,9 +201,9 @@ void Backend::generate_info_console(const Package& package)
         {
             continue;
         }
-        std::cout << '\n' << "1st Party Target: " << target.name << "\n\n";
+        std::cout << '\n' << "1st Party Target Files: " << target.name << "\n\n";
 
-        print_target(target);
+        print_target_files(target);
     }
 
     // print each of the 3rd party targets
@@ -179,10 +213,70 @@ void Backend::generate_info_console(const Package& package)
         {
             continue;
         }
-        std::cout << '\n' << "3rd Party Target: " << target.name << "\n\n";
+        std::cout << '\n' << "3rd Party Target Files: " << target.name << "\n\n";
 
-        print_target(target);
+        print_target_files(target);
     }
+
+    
+
+    std::map<int, std::string> firstPartyFiles;
+    std::map<int, std::string> thirdPartyFiles;
+
+    for (const Target& target : package.targets)
+    {
+        if (target.is_third_party)
+        {
+            for (auto&& file : target.source_files)
+            {
+                thirdPartyFiles[target.file_counts.at(file).total_lines] = file;
+            }
+            for (auto&& file : target.include_files)
+            {
+                thirdPartyFiles[target.file_counts.at(file).total_lines] = file;
+            }
+        }
+        else
+        {
+            for (auto&& file : target.source_files)
+            {
+                firstPartyFiles[target.file_counts.at(file).total_lines] = file;
+            }
+            for (auto&& file : target.include_files)
+            {
+                firstPartyFiles[target.file_counts.at(file).total_lines] = file;
+            }
+        }
+    }
+
+    std::cout << "\n\n";
+    std::cout << "Top 10 Largest 1st Party Files:\n\n";
+
+    int i = 0;
+
+    Table<2> firstPartyFileTable;
+    firstPartyFileTable.insert_row("File", "Total Lines");
+
+    for (auto it = firstPartyFiles.rbegin(); it != firstPartyFiles.rend() && i < 10; ++it, ++i)
+    {
+        firstPartyFileTable.insert_row(it->second, it->first);
+    }
+
+    std::cout << firstPartyFileTable;
+    std::cout << "\n\n";
+    std::cout << "Top 10 Largest 3rd Party Files:\n\n";
+
+    Table<2> thirdPartyFileTable;
+    thirdPartyFileTable.insert_row("File", "Total Lines");
+
+    i = 0;
+
+    for (auto it = thirdPartyFiles.rbegin(); it != thirdPartyFiles.rend() && i < 10; ++it, ++i)
+    {
+        thirdPartyFileTable.insert_row(it->second, it->first);
+    }
+
+    std::cout << thirdPartyFileTable;
 }
 
 void Backend::generate_info_csv(const Package& package)

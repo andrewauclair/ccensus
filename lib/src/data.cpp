@@ -6,10 +6,6 @@
 
 void Target::process()
 {
-    std::set<std::string> files;
-    files.insert(include_files.begin(), include_files.end());
-    files.insert(source_files.begin(), source_files.end());
-
     for (auto&& path : include_paths)
     {
         if (!is_node_target_include_directory(path.backtrace_index))
@@ -22,11 +18,22 @@ void Target::process()
             {
                 continue;
             }
-            files.insert(entry.path().string());
+            const auto path = entry.path().string();
+
+            if (path.ends_with(".h") || path.ends_with(".hpp"))
+            {
+                include_files.push_back(path);
+            }
+            if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
+            {
+                source_files.push_back(path);
+            }
         }
     }
 
-    // std::sort(files.begin(), files.end());
+    std::set<std::string> files;
+    files.insert(include_files.begin(), include_files.end());
+    files.insert(source_files.begin(), source_files.end());
 
     total_counts = {};
     file_counts = {};
@@ -89,4 +96,10 @@ void Package::process()
     {
         target.process();
     }
+
+    std::sort(targets.begin(), targets.end(), 
+        [](const Target& a, const Target& b) {
+            return a.total_counts.total_lines < b.total_counts.total_lines;
+        }
+    );
 }

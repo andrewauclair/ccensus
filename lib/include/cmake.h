@@ -19,7 +19,7 @@ public:
     Package parse();
 
 private:
-    void query();
+    bool query();
     parse_result read_index_file();
     parse_result read_model_file(parse_result& json);
 
