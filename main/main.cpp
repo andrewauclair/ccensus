@@ -6,6 +6,8 @@
 #include "backend.h"
 #include "cmake.h"
 
+#include "CLI/CLI.hpp"
+
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -44,6 +46,41 @@ using namespace simdjson;
 // Project Aa             X							      X					X
 int main(int argc, char** argv)
 {
+	auto app = CLI::App("Line of code counter");
+	argv = app.ensure_utf8(argv);
+
+	// --visual-studio
+	// --cmake
+	// --console (default)
+	// --csv
+	// --json
+	// --diff <a.json> <b.json>
+	std::string visual_studio_file;
+	std::string cmake_build_dir;
+
+	auto* vs = app.add_option("--visual-studio", visual_studio_file)
+	->check(CLI::ExistingFile);
+	auto* cmake = app.add_option("--cmake", cmake_build_dir)
+	->check(CLI::ExistingDirectory);
+	
+	auto* group = app.add_option_group("types", "");
+	group->add_option(vs);
+	group->add_option(cmake);
+group->require_option(1);
+
+	bool console = false;
+	bool csv = false;
+	bool json = false;
+
+	app.add_flag("--console", console);
+	app.add_flag("--csv", csv);
+	app.add_flag("--json", json);
+
+	// --file-types <comma-separated-list> (default is .h,.hpp,.c,.cc,.cxx,.cpp)
+
+
+	CLI11_PARSE(app, argc, argv);
+
 	if (argc < 3)
 	{
 		std::cerr << "Not enough arguments\n";

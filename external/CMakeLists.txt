@@ -29,4 +29,11 @@ FetchContent_Declare(
     GIT_TAG         v3.9.2
 )
 
-FetchContent_MakeAvailable(Catch2 ApprovalTests.cpp simdjson)
+FetchContent_Declare(
+    CLI11
+    GIT_SHALLOW     TRUE
+    GIT_REPOSITORY  https://github.com/CLIUtils/CLI11
+    GIT_TAG         v2.4.2
+)
+
+FetchContent_MakeAvailable(Catch2 ApprovalTests.cpp simdjson CLI11)
