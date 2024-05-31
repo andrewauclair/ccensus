@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <fstream>
 #include <set>
+#include <iostream>
 
 void Target::process()
 {
@@ -12,22 +13,30 @@ void Target::process()
         {
             continue;
         }
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(path.path))
+        
+        try
         {
-            if (entry.is_directory())
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(path.path))
             {
-                continue;
-            }
-            const auto path = entry.path().string();
+                if (entry.is_directory())
+                {
+                    continue;
+                }
+                const auto path = entry.path().string();
 
-            if (path.ends_with(".h") || path.ends_with(".hpp"))
-            {
-                include_files.push_back(path);
+                if (path.ends_with(".h") || path.ends_with(".hpp"))
+                {
+                    include_files.push_back(path);
+                }
+                if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
+                {
+                    source_files.push_back(path);
+                }
             }
-            if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
-            {
-                source_files.push_back(path);
-            }
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Failed to read from directory " << path.path << "because: " << e.what() << '\n';
         }
     }
 

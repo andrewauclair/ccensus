@@ -55,26 +55,42 @@ int main(int argc, char** argv)
 	// --csv
 	// --json
 	// --diff <a.json> <b.json>
+	// --targets-only
 	std::string visual_studio_file;
 	std::string cmake_build_dir;
 
-	auto* vs = app.add_option("--visual-studio", visual_studio_file)
-	->check(CLI::ExistingFile);
-	auto* cmake = app.add_option("--cmake", cmake_build_dir)
-	->check(CLI::ExistingDirectory);
+	std::vector<std::string> json_diff;
+
+	auto* vs = app.add_option("--visual-studio", visual_studio_file, "Read LOC data from a Visual Studio solution file (.sln)");
+	vs->check(CLI::ExistingFile);
+
+	auto* cmake = app.add_option("--cmake", cmake_build_dir, "Read LOC data from a cmake build directory");
+	cmake->check(CLI::ExistingDirectory);
 	
+	auto* diff = app.add_option("--diff", json_diff, "Compare LOC data in two previously recorded JSON files");
+	diff->check(CLI::ExistingFile);
+	diff->expected(2);
+
 	auto* group = app.add_option_group("types", "");
 	group->add_option(vs);
 	group->add_option(cmake);
-group->require_option(1);
+	group->add_option(diff);
 
+	// only allow one of --visual-studio, --cmake or --diff
+	group->require_option(1);
+
+	app.set_version_flag("-v,--version", "0.1 " __DATE__);
+	
 	bool console = false;
 	bool csv = false;
 	bool json = false;
+	bool targets_only = false;
 
-	app.add_flag("--console", console);
-	app.add_flag("--csv", csv);
-	app.add_flag("--json", json);
+	app.add_flag("--console", console, "Output to the console");
+	app.add_flag("--csv", csv, "Output to a CSV file");
+	app.add_flag("--json", json, "Output to a JSON file");
+
+	auto* targets_only_option = app.add_flag("--targets-only", targets_only, "Output only targets and not individual files");
 
 	// --file-types <comma-separated-list> (default is .h,.hpp,.c,.cc,.cxx,.cpp)
 
@@ -91,120 +107,20 @@ group->require_option(1);
 
 	bool verbose = true;
 
-	if (std::string(argv[1]) == "--compare-solutions")
+	if (!visual_studio_file.empty())
 	{
-		if (argc < 4)
-		{
-			return -1;
-		}
-
-		OutputDetail outputDetail = OutputDetail::FILES;
-
-		if (argc >= 5 && std::string(argv[4]) == "--detail-only-diffs")
-		{
-			outputDetail = OutputDetail::ONLY_DIFFS;
-		}
-		compare_solutions(argv[2], argv[3], OutputType::CONSOLE, outputDetail);
+		single_solution(visual_studio_file, OutputType::CONSOLE, OutputDetail::FILES);
 	}
-	else if (std::string(argv[1]) == "--compare-projects")
+	else if (!cmake_build_dir.empty())
 	{
-		if (argc < 4)
-		{
-			return -1;
-		}
-
-	}
-	else if (std::string(argv[1]) == "--single-solution")
-	{
-		single_solution(argv[2], OutputType::CONSOLE, OutputDetail::FILES);
-	}
-	else if (std::string(argv[1]) == "--single-project")
-	{
-		//parse_project()
-	}
-	else if (std::string(argv[1]) == "--cmake")
-	{
-		std::string build_directory = argv[2];
-
-		auto cmake = CMakeFrontend(build_directory);
+		auto cmake = CMakeFrontend(cmake_build_dir);
 
 		Package package = cmake.parse();
 
 		package.process();
 
 		Backend backend;
-		backend.generate_info_output(package, OutputType::CONSOLE);
-	}
-	else if (std::string(argv[1]) == "--cmake-project")
-	{
-		// using cmake-file-api v1 Client Stateless Query Files
-		std::string build_directory = argv[2];
-		std::string reply_directory = build_directory + "/.cmake/api/v1/reply/";
-
-		// write query file to build directory
-		std::filesystem::create_directories(build_directory + "/.cmake/api/v1/query/client-ccensus/");
-
-		{
-			std::ofstream(build_directory + "/.cmake/api/v1/query/client-ccensus/codemodel-v2");
-		}
-
-		// run cmake . in the build directory
-		std::system(std::string("(cd " + build_directory + " && cmake .)").c_str());
-
-		// remove the query file now that we're done with it
-		std::filesystem::remove(build_directory + "/.cmake/api/v1/query/client-ccensus/codemodel-v2");
-
-		std::vector<std::filesystem::directory_entry> index_files;
-
-		// read reply json files from build directory
-		for (auto const& dir_entry : std::filesystem::directory_iterator(build_directory + "/.cmake/api/v1/reply/")) 
-		{
-			if (dir_entry.path().filename().string().starts_with("index-"))
-			{
-				index_files.push_back(dir_entry);
-			}
-		}
-
-		// TODO if there are no index files then something is wrong
-
-		std::sort(index_files.begin(), index_files.end(), [](const auto& a, const auto& b) {
-			return a.path().filename() < a.path().filename();
-		});
-
-		auto current_index_file = index_files.back();
-
-		ondemand::parser parser;
-		padded_string index_file_json = padded_string::load(current_index_file.path().string());
-
-		// find our reply
-		ondemand::document index = parser.iterate(index_file_json);
-
-		auto model_file = index["reply"]["client-ccensus"]["codemodel-v2"]["jsonFile"];
-
-		std::cout << model_file << '\n';
-
-		std::string model_filepath = reply_directory + std::string(std::string_view(model_file));
-		padded_string model_json = padded_string::load(model_filepath);
-
-		ondemand::document model = parser.iterate(model_json);
-
-		auto configurations = model["configurations"];
-
-		for (auto config : configurations)
-		{
-			std::cout << "config: " << config["name"] << '\n';
-
-			auto targets = config["targets"];
-
-			for (auto target : targets)
-			{
-				std::cout << "target: " << target["name"] << '\n';
-			}
-		}
-		
-		auto version = model["version"];
-		std::cout << "codemodel-v2: " << std::int64_t(version["major"]) <<
-			'.' << std::int64_t(version["minor"]) << '\n';
+		backend.generate_info_output(package, OutputType::CONSOLE, targets_only);
 	}
 
 	auto clock_now = std::chrono::system_clock::now();

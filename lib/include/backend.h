@@ -8,7 +8,7 @@
 class Backend
 {
 public:
-    void generate_info_output(const Package& package, OutputType outputType);
+    void generate_info_output(const Package& package, OutputType outputType, bool targets_only);
     void generate_diff_output(const Package& package, OutputType outputType);
     
 private:
@@ -19,6 +19,9 @@ private:
     void generate_diff_console(const Package& package);
     void generate_diff_csv(const Package& package);
     void generate_diff_json(const Package& package);
+
+private:
+    bool m_targets_only = false;
 };
 
 #endif
