@@ -24,7 +24,7 @@ void Backend::generate_info_output(const Package& package, OutputType outputType
     }
 }
 
-void Backend::generate_diff_output(const Package& package, OutputType outputType)
+void Backend::generate_diff_output(const Package& package, OutputType outputType, bool targets_only)
 {
     switch (outputType)
     {

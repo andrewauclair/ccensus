@@ -1,8 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS // test
 
-#include "project.h"
-#include "solution.h"
-#include "lib.h"
 #include "backend.h"
 #include "cmake.h"
 #include "visual_studio_frontend.h"
@@ -33,6 +30,13 @@ struct CommandLineOptions
 	bool csv = false;
 	bool json = false;
 	bool targets_only = false;
+
+	OutputType outputType() const
+	{
+		if (csv) return OutputType::CSV;
+		if (json) return OutputType::JSON;
+		return OutputType::CONSOLE;
+	}
 };
 
 void configure_and_parse_cli(CommandLineOptions& options, int argc, char** argv)
@@ -77,28 +81,27 @@ int main(int argc, char** argv)
 
 	auto clock_start = std::chrono::system_clock::now();
 
-	if (!options.visual_studio_file.empty())
+	if (!options.visual_studio_file.empty() || options.cmake_build_dir.empty())
 	{
-		//single_solution(options.visual_studio_file, OutputType::CONSOLE, OutputDetail::FILES);
-		auto vs = VisualStudioFrontend(options.visual_studio_file);
+		Package package;
 
-		Package package = vs.parse();
+		if (!options.visual_studio_file.empty())
+		{
+			auto vs = VisualStudioFrontend(options.visual_studio_file);
+
+			package = vs.parse();
+		}
+		else if (!options.cmake_build_dir.empty())
+		{
+			auto cmake = CMakeFrontend(options.cmake_build_dir);
+
+			package = cmake.parse();
+		}
 
 		package.process();
 
 		Backend backend;
-		backend.generate_info_output(package, OutputType::CONSOLE, options.targets_only);
-	}
-	else if (!options.cmake_build_dir.empty())
-	{
-		auto cmake = CMakeFrontend(options.cmake_build_dir);
-
-		Package package = cmake.parse();
-
-		package.process();
-
-		Backend backend;
-		backend.generate_info_output(package, OutputType::CONSOLE, options.targets_only);
+		backend.generate_info_output(package, options.outputType(), options.targets_only);
 	}
 
 	auto clock_now = std::chrono::system_clock::now();

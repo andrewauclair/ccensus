@@ -3,13 +3,19 @@
 
 #include "utils.h"
 #include "data.h"
-#include "lib.h"
+
+enum class OutputType
+{
+    CONSOLE,
+    CSV,
+    JSON
+};
 
 class Backend
 {
 public:
     void generate_info_output(const Package& package, OutputType outputType, bool targets_only);
-    void generate_diff_output(const Package& package, OutputType outputType);
+    void generate_diff_output(const Package& package, OutputType outputType, bool targets_only);
     
 private:
     void generate_info_console(const Package& package);
