@@ -79,18 +79,15 @@ void Backend::generate_info_console(const Package& package)
 
     for (const Target& target : package.targets)
     {
-        total_files += target.include_files.size();
-        total_files += target.source_files.size();
+        total_files += target.files.size();
 
         if (target.is_third_party)
         {
-            total_3rd_party_files += target.include_files.size();
-            total_3rd_party_files += target.source_files.size();
+            total_3rd_party_files += target.files.size();
         }
         else
         {
-            total_1st_party_files += target.include_files.size();
-            total_1st_party_files += target.source_files.size();
+            total_1st_party_files += target.files.size();
         }
     }
 
@@ -151,8 +148,7 @@ void Backend::generate_info_console(const Package& package)
 
     const auto print_target_files = [](const Target& target) {
         std::vector<std::string> files;
-        files.insert(files.end(), target.include_files.begin(), target.include_files.end());
-        files.insert(files.end(), target.source_files.begin(), target.source_files.end());
+        files.insert(files.end(), target.files.begin(), target.files.end());
 
         for (auto&& path : target.include_paths)
         {
@@ -239,22 +235,14 @@ void Backend::generate_info_console(const Package& package)
         {
             if (target.is_third_party)
             {
-                for (auto&& file : target.source_files)
-                {
-                    thirdPartyFiles[target.file_counts.at(file).total_lines] = file;
-                }
-                for (auto&& file : target.include_files)
+                for (auto&& file : target.files)
                 {
                     thirdPartyFiles[target.file_counts.at(file).total_lines] = file;
                 }
             }
             else
             {
-                for (auto&& file : target.source_files)
-                {
-                    firstPartyFiles[target.file_counts.at(file).total_lines] = file;
-                }
-                for (auto&& file : target.include_files)
+                for (auto&& file : target.files)
                 {
                     firstPartyFiles[target.file_counts.at(file).total_lines] = file;
                 }

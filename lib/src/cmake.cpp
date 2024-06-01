@@ -168,8 +168,7 @@ Package CMakeFrontend::parse_package(parse_result& json)
 
     for (auto&& target : package.targets)
     {
-        files += target.include_files.size();
-        files += target.source_files.size();
+        files += target.files.size();
     }
     
     return package;
@@ -215,11 +214,11 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
 
                 if (path.ends_with(".h") || path.ends_with(".hpp"))
                 {
-                    target.include_files.push_back(source_directory + "/" + std::string(path));
+                    target.files.push_back(source_directory + "/" + std::string(path));
                 }
                 else if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
                 {
-                    target.source_files.push_back(source_directory + "/" + std::string(path));
+                    target.files.push_back(source_directory + "/" + std::string(path));
                 }
             }
         }

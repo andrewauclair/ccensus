@@ -3,6 +3,7 @@
 	src/project.cpp
 	src/solution.cpp
 	src/cmake.cpp
+	src/visual_studio_frontend.cpp
 	src/data.cpp
 	src/backend.cpp
 )

@@ -26,11 +26,11 @@ void Target::process()
 
                 if (path.ends_with(".h") || path.ends_with(".hpp"))
                 {
-                    include_files.push_back(path);
+                    files.push_back(path);
                 }
                 if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
                 {
-                    source_files.push_back(path);
+                    files.push_back(path);
                 }
             }
         }
@@ -39,10 +39,6 @@ void Target::process()
             std::cerr << "Failed to read from directory " << path.path << "because: " << e.what() << '\n';
         }
     }
-
-    std::set<std::string> files;
-    files.insert(include_files.begin(), include_files.end());
-    files.insert(source_files.begin(), source_files.end());
 
     total_counts = {};
     file_counts = {};

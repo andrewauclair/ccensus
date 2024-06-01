@@ -55,8 +55,7 @@ struct Target
 	std::string id;
     std::string name;
     std::string path;
-    std::vector<std::string> include_files;
-    std::vector<std::string> source_files;
+
 	std::vector<IncludePath> include_paths;
 
 	// not sure we can actually tell if something is 3rd party in VS solutions
