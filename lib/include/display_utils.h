@@ -6,6 +6,7 @@
 #include <variant>
 #include <string>
 #include <format>
+#include <array>
 
 inline std::int64_t width_for_value(std::int64_t value)
 {
