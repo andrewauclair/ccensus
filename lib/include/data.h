@@ -95,6 +95,8 @@ struct Target
 
 struct Package
 {
+	std::string output_file = "test.json";
+
     std::vector<Target> targets;
 
 	void process();

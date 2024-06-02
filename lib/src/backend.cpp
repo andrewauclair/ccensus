@@ -5,8 +5,20 @@
 #include <algorithm>
 #include <string>
 #include <set>
+#include <fstream>
+#include <ctime>
 
-#include <nlohmann/json.h>
+#include <nlohmann/json.hpp>
+
+std::string get_ISO_8601_time()
+{
+    time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+
+    return buf;
+}
 
 void Backend::generate_info_output(const Package& package, OutputType outputType, bool targets_only)
 {
@@ -289,10 +301,26 @@ void Backend::generate_info_csv(const Package& package)
 
 void Backend::generate_info_json(const Package& package)
 {
-    using nlohman_json;
-    // info: ccensus version, file format
+    using namespace nlohmann;
+
+    json data;
+
+    // info: ccensus version, file format and creation date
+    json info;
+    info["ccensus-version"] = "0.1";
+    info["file-format-version"] = 1;
+    std::cout << get_ISO_8601_time();
+    info["creation-time"] = get_ISO_8601_time();
+
+    data["info"] = info;
+    
     // per target: id, name, path, files, 3rd party flag, list of ids of dependencies
     // per file: full path, total lines, physical lines, blank lines, comment lines
+
+    // write to the file
+    auto out = std::ofstream(package.output_file);
+
+    out << data;
 }
 
 void Backend::generate_diff_console(const Package& package)

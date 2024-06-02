@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 
 	auto clock_start = std::chrono::system_clock::now();
 
-	if (!options.visual_studio_file.empty() || options.cmake_build_dir.empty())
+	if (!options.visual_studio_file.empty() || !options.cmake_build_dir.empty())
 	{
 		Package package;
 
