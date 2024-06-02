@@ -7,4 +7,4 @@
 
 target_include_directories(ccensus_lib PUBLIC include)
 
-target_link_libraries(ccensus_lib PRIVATE simdjson)
+target_link_libraries(ccensus_lib PRIVATE simdjson nlohmann_json)

@@ -6,6 +6,8 @@
 #include <string>
 #include <set>
 
+#include <nlohmann/json.h>
+
 void Backend::generate_info_output(const Package& package, OutputType outputType, bool targets_only)
 {
     m_targets_only = targets_only;
@@ -287,7 +289,10 @@ void Backend::generate_info_csv(const Package& package)
 
 void Backend::generate_info_json(const Package& package)
 {
-    
+    using nlohman_json;
+    // info: ccensus version, file format
+    // per target: id, name, path, files, 3rd party flag, list of ids of dependencies
+    // per file: full path, total lines, physical lines, blank lines, comment lines
 }
 
 void Backend::generate_diff_console(const Package& package)

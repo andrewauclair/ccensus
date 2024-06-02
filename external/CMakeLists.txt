@@ -30,10 +30,17 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
+    nlohmann_json
+    GIT_SHALLOW     TRUE
+    GIT_REPOSITORY https://github.com/nlohmann/json
+    GIT_TAG         v3.11.2
+)
+
+FetchContent_Declare(
     CLI11
     GIT_SHALLOW     TRUE
     GIT_REPOSITORY  https://github.com/CLIUtils/CLI11
     GIT_TAG         v2.4.2
 )
 
-FetchContent_MakeAvailable(Catch2 ApprovalTests.cpp simdjson CLI11)
+FetchContent_MakeAvailable(Catch2 ApprovalTests.cpp simdjson CLI11 nlohmann_json)
