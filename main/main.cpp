@@ -25,6 +25,8 @@ struct CommandLineOptions
 	std::string cmake_build_dir;
 	std::vector<std::string> json_diff;
 
+	std::string output_file;
+
 	// flags
 	bool console = false;
 	bool csv = false;
@@ -54,6 +56,8 @@ void configure_and_parse_cli(CommandLineOptions& options, int argc, char** argv)
 	auto* vs = app.add_option("--visual-studio", options.visual_studio_file, "Read LOC data from a Visual Studio solution file (.sln)");
 	auto* cmake = app.add_option("--cmake", options.cmake_build_dir, "Read LOC data from a cmake build directory");
 	auto* diff = app.add_option("--diff", options.json_diff, "Compare LOC data in two previously recorded JSON files");
+
+	app.add_option("--output-file", options.output_file, "The file to output results to");
 
 	auto* group = app.add_option_group("types", "");
 	group->add_option(vs);
@@ -90,6 +94,7 @@ int main(int argc, char** argv)
 			auto vs = VisualStudioFrontend(options.visual_studio_file);
 
 			package = vs.parse();
+			package.source_dir = std::filesystem::path(options.visual_studio_file).parent_path().string();
 		}
 		else if (!options.cmake_build_dir.empty())
 		{
@@ -98,6 +103,10 @@ int main(int argc, char** argv)
 			package = cmake.parse();
 		}
 
+std::cout << package.source_dir << '\n';
+
+		package.output_file = options.output_file;
+		
 		package.process();
 
 		Backend backend;

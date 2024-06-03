@@ -5,7 +5,7 @@
 #include <set>
 #include <iostream>
 
-void Target::process()
+void Target::process(const std::string& source_directory)
 {
     for (auto&& path : include_paths)
     {
@@ -22,7 +22,12 @@ void Target::process()
                 {
                     continue;
                 }
-                const auto path = entry.path().string();
+                auto path = entry.path().string();
+
+                if (path.starts_with(source_directory))
+                {
+                    path.erase(0, source_directory.size());
+                }
 
                 if (path.ends_with(".h") || path.ends_with(".hpp"))
                 {
@@ -36,7 +41,7 @@ void Target::process()
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Failed to read from directory " << path.path << "because: " << e.what() << '\n';
+            std::cerr << "Failed to read from directory " << path.path << "\n    because: " << e.what() << '\n';
         }
     }
 
@@ -46,7 +51,13 @@ void Target::process()
 
     for (auto&& file_path : files)
     {
-        auto file = std::ifstream(file_path);
+        auto path = file_path;
+
+        if (!std::filesystem::path(path).is_absolute())
+        {
+            path = source_directory + file_path;
+        }
+        auto file = std::ifstream(path);
         std::string line;
 
         LineCounts counts;
@@ -99,7 +110,7 @@ void Package::process()
 {
     for (Target& target : targets)
     {
-        target.process();
+        target.process(source_dir);
     }
 
     std::sort(targets.begin(), targets.end(), 

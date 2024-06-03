@@ -135,6 +135,7 @@ Package CMakeFrontend::parse_package(parse_result& json)
     auto source_directory = std::string(std::string_view(paths["source"]));
 
     Package package;
+    package.source_dir = std::filesystem::canonical(source_directory).string() + "/";
 
     for (const cmake_target& cached_target : target_cache)
     {
@@ -214,11 +215,11 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
 
                 if (path.ends_with(".h") || path.ends_with(".hpp"))
                 {
-                    target.files.push_back(source_directory + "/" + std::string(path));
+                    target.files.push_back(std::string(path));
                 }
                 else if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
                 {
-                    target.files.push_back(source_directory + "/" + std::string(path));
+                    target.files.push_back(std::string(path));
                 }
             }
         }

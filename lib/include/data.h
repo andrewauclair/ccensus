@@ -90,11 +90,12 @@ struct Target
 		}
 		return false;
 	}
-	void process();
+	void process(const std::string& source_directory);
 };
 
 struct Package
 {
+	std::string source_dir;
 	std::string output_file = "test.json";
 
     std::vector<Target> targets;
