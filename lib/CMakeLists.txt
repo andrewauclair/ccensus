@@ -3,6 +3,8 @@
 	src/visual_studio_frontend.cpp
 	src/data.cpp
 	src/backend.cpp
+	src/diff.cpp
+	src/count.cpp
 )
 
 target_include_directories(ccensus_lib PUBLIC include)

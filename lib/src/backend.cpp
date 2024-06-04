@@ -1,5 +1,6 @@
 #include "backend.h"
 #include "display_utils.h"
+#include "diff.h"
 
 #include <iostream>
 #include <algorithm>
@@ -38,18 +39,20 @@ void Backend::generate_info_output(const Package& package, OutputType outputType
     }
 }
 
-void Backend::generate_diff_output(const Package& package, OutputType outputType, bool targets_only)
+void Backend::generate_diff_output(const std::string& json_a, const std::string& json_b, OutputType outputType, bool targets_only)
 {
+    m_targets_only = targets_only;
+    
     switch (outputType)
     {
     case OutputType::CONSOLE:
-        generate_diff_console(package);
+        generate_diff_console(json_a, json_b);
         break;
     case OutputType::CSV:
-        generate_diff_csv(package);
+        generate_diff_csv(json_a, json_b);
         break;
     case OutputType::JSON:
-        generate_diff_json(package);
+        generate_diff_json(json_a, json_b);
         break;
     }
 }
@@ -326,7 +329,7 @@ void Backend::generate_info_json(const Package& package)
     std::vector<json> targets;
 
     // per target: id, name, path, files, 3rd party flag, list of ids of dependencies
-    // per file: full path, total lines, physical lines, blank lines, comment lines
+    // per file: relative path, total lines, physical lines, blank lines, comment lines
 
     for (const Target& target : package.targets)
     {
@@ -342,11 +345,7 @@ void Backend::generate_info_json(const Package& package)
 
             json file_obj;
             file_obj["name"] = file;
-            file_obj["lines"] = { counts.total_lines, counts.physical_lines(), counts.comment_lines, counts.blank_lines };
-            // file_obj["total"] = counts.total_lines;
-            // file_obj["physical"] = counts.physical_lines();
-            // file_obj["blank"] = counts.blank_lines;
-            // file_obj["comment"] = counts.comment_lines;
+            file_obj["lines"] = { counts.total_lines, counts.code_only_lines, counts.code_and_comment_lines, counts.comment_lines, counts.blank_lines };
 
             files.push_back(file_obj);
         }
@@ -370,17 +369,25 @@ void Backend::generate_info_json(const Package& package)
     out << data;
 }
 
-void Backend::generate_diff_console(const Package& package)
+void Backend::generate_diff_console(const std::string& json_a, const std::string& json_b)
+{
+    ProjectDiff difference = project_difference(json_a, json_b);
+
+    // totals
+    LineCounts total_line_count_diff = difference.total_line_count_diff();
+
+    std::cout << "\n\n";
+    std::cout << "Total Targets: 0\n"; // TODO
+    std::cout << "Total Files: 0\n"; // TODO
+    std::cout << "Total Lines: " << std::showpos << total_line_count_diff.total_lines << '\n';
+}
+
+void Backend::generate_diff_csv(const std::string& json_a, const std::string& json_b)
 {
     
 }
 
-void Backend::generate_diff_csv(const Package& package)
-{
-    
-}
-
-void Backend::generate_diff_json(const Package& package)
+void Backend::generate_diff_json(const std::string& json_a, const std::string& json_b)
 {
 
 }

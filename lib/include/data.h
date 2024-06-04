@@ -1,40 +1,14 @@
 #ifndef CCENSUS_DATA_H
 #define CCENSUS_DATA_H
 
+#include "count.h"
+
 #include <cstdint>
 #include <vector>
 #include <filesystem>
 #include <string>
 #include <map>
 #include <optional>
-
-struct LineCounts
-{
-	std::int64_t total_lines = 0;
-	std::int64_t code_only_lines = 0;
-	std::int64_t code_and_comment_lines = 0;
-	std::int64_t comment_lines = 0;
-	std::int64_t blank_lines = 0;
-
-	std::int64_t physical_lines() const
-	{
-		auto count = total_lines;
-
-		count -= blank_lines;
-		count -= comment_lines - code_and_comment_lines;
-
-		return count;
-	}
-
-	void operator+=(const LineCounts& counts)
-	{
-		total_lines += counts.total_lines;
-		code_only_lines += counts.code_only_lines;
-		code_and_comment_lines += counts.code_and_comment_lines;
-		comment_lines += counts.comment_lines;
-		blank_lines += counts.blank_lines;
-	}
-};
 
 struct BacktraceNode
 {

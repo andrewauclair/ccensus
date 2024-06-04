@@ -112,6 +112,11 @@ std::cout << package.source_dir << '\n';
 		Backend backend;
 		backend.generate_info_output(package, options.outputType(), options.targets_only);
 	}
+	else if (!options.json_diff.empty())
+	{
+		Backend backend;
+		backend.generate_diff_output(options.json_diff[0], options.json_diff[1], options.outputType(), options.targets_only);
+	}
 
 	auto clock_now = std::chrono::system_clock::now();
 	auto elapsed_time = std::chrono::duration_cast <std::chrono::milliseconds> (clock_now - clock_start).count();
