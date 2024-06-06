@@ -42,8 +42,9 @@ struct Target
 	// flag to check if this is a cmake utility. we'll skip those targets
 	// TODO skipping utility targets might be an issue if they generate C++ code?
 	bool is_utility = false;
-
-	LineCounts total_counts;
+private:
+	LineCounts m_total_counts;
+public:
     std::map<std::string, LineCounts> file_counts;
 
 	std::vector<Target*> target_dependencies;
@@ -65,6 +66,10 @@ struct Target
 		return false;
 	}
 	void process(const std::string& source_directory);
+
+	void calculate_total_counts();
+
+	const LineCounts& total_counts() const { return m_total_counts; }
 };
 
 struct Package

@@ -25,11 +25,11 @@ struct ProjectDiff
         {
             if (target.second.left)
             {
-                a += target.second.left->total_counts;
+                a += target.second.left->total_counts();
             }
             if (target.second.right)
             {
-                b += target.second.right->total_counts;
+                b += target.second.right->total_counts();
             }
         }
 

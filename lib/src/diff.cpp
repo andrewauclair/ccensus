@@ -12,7 +12,7 @@ ProjectDiff project_difference(const std::string& json_a, const std::string& jso
     simdjson::padded_string string_b = simdjson::padded_string::load(json_b);
 
     simdjson::ondemand::document doc_a = parser.iterate(string_a);
-    simdjson::ondemand::document doc_b = parser.iterate(string_b);
+    
 
     // TODO check the format version of the file
     const auto load_document = [&](simdjson::ondemand::document& doc, bool left) {
@@ -20,6 +20,11 @@ ProjectDiff project_difference(const std::string& json_a, const std::string& jso
         {
             if (json.key() == "info")
             {
+                auto obj = json.value().get_object();
+                auto ccensus_version = obj["ccensus-version"];
+                auto creation_time = obj["creation-time"];
+                
+                std::cout << "Loading JSON from ccensus version " << ccensus_version << ", created at " << creation_time << '\n';
             }
             else if (json.key() == "targets")
             {
@@ -58,19 +63,16 @@ ProjectDiff project_difference(const std::string& json_a, const std::string& jso
                             }
                             i++;
                         }
-                        // counts.total_lines = lines.at(0);
-                        // counts.code_only_lines = lines.at(1);
-                        // counts.code_and_comment_lines = lines.at(2);
-                        // counts.comment_lines = lines.at(3);
-                        // counts.blank_lines = lines.at(4);
 
                         std::string name = std::string(std::string_view(file["name"]));
                         load_target.file_counts[name] = counts;
                         load_target.files.push_back(name);
-
-                        
                     }
-load_target.name = static_cast<std::string_view>(target["name"]);
+
+                    load_target.calculate_total_counts();
+
+                    load_target.name = static_cast<std::string_view>(target["name"]);
+
                     if (left)
                     {
                         diffs.differences[load_target.name].left = load_target;
@@ -85,6 +87,7 @@ load_target.name = static_cast<std::string_view>(target["name"]);
     };
 
     load_document(doc_a, true);
+    simdjson::ondemand::document doc_b = parser.iterate(string_b);
     load_document(doc_b, false);
 
     return diffs;

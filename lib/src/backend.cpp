@@ -78,15 +78,15 @@ void Backend::generate_info_console(const Package& package)
 
     for (const Target& target : package.targets)
     {
-        total_lines += target.total_counts;
+        total_lines += target.total_counts();
 
         if (target.is_third_party)
         {
-            total_3rd_party_lines += target.total_counts;
+            total_3rd_party_lines += target.total_counts();
         }
         else
         {
-            total_1st_party_lines += target.total_counts;
+            total_1st_party_lines += target.total_counts();
         }
     }
 
@@ -144,8 +144,8 @@ void Backend::generate_info_console(const Package& package)
         }
         std::cout << '\n' << "1st Party Target Totals: " << target.name << "\n\n";
         std::cout << "Total Files: " << target.files.size() << '\n';
-        std::cout << "Total Lines: " << target.total_counts.total_lines << '\n';
-        std::cout << "Total Physical Lines: " << target.total_counts.physical_lines() << '\n';
+        std::cout << "Total Lines: " << target.total_counts().total_lines << '\n';
+        std::cout << "Total Physical Lines: " << target.total_counts().physical_lines() << '\n';
         std::cout << "\n\n";
     }
 
@@ -158,8 +158,8 @@ void Backend::generate_info_console(const Package& package)
         }
         std::cout << '\n' << "3rd Party Target Totals: " << target.name << "\n\n";
         std::cout << "Total Files: " << target.files.size() << '\n';
-        std::cout << "Total Lines: " << target.total_counts.total_lines << '\n';
-        std::cout << "Total Physical Lines: " << target.total_counts.physical_lines() << '\n';
+        std::cout << "Total Lines: " << target.total_counts().total_lines << '\n';
+        std::cout << "Total Physical Lines: " << target.total_counts().physical_lines() << '\n';
         std::cout << "\n\n";
     }
 
@@ -367,6 +367,8 @@ void Backend::generate_info_json(const Package& package)
     auto out = std::ofstream(output_file);
 
     out << data;
+
+    std::cout << "Wrote output to: " << output_file << '\n';
 }
 
 void Backend::generate_diff_console(const std::string& json_a, const std::string& json_b)

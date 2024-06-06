@@ -47,7 +47,6 @@ void Target::process(const std::string& source_directory)
         }
     }
 
-    total_counts = {};
     file_counts = {};
 
     for (auto&& file_path : files)
@@ -60,8 +59,10 @@ void Target::process(const std::string& source_directory)
         }
 
         file_counts[file_path] = counts_for_file(path);
-        total_counts += file_counts[file_path];
+        // total_counts += file_counts[file_path];
 	}
+
+    calculate_total_counts();
 }
 
 void Package::process()
@@ -73,7 +74,17 @@ void Package::process()
 
     std::sort(targets.begin(), targets.end(), 
         [](const Target& a, const Target& b) {
-            return a.total_counts.total_lines < b.total_counts.total_lines;
+            return a.total_counts().total_lines < b.total_counts().total_lines;
         }
     );
+}
+
+void Target::calculate_total_counts()
+{
+    m_total_counts = {};
+
+    for (auto&& file : file_counts)
+    {
+        m_total_counts += file.second;
+    }
 }
