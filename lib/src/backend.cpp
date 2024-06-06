@@ -378,10 +378,91 @@ void Backend::generate_diff_console(const std::string& json_a, const std::string
     // totals
     LineCounts total_line_count_diff = difference.total_line_count_diff();
 
+    const std::int64_t total_targets_diff = [&]() {
+        std::int64_t left_targets = 0;
+        std::int64_t right_targets = 0;
+
+        for (auto&& target : difference.differences)
+        {
+            if (target.second.left)
+            {
+                left_targets++;
+            }
+            if (target.second.right)
+            {
+                right_targets++;
+            }
+        }
+        return right_targets - left_targets;
+    }();
+
+    const std::int64_t total_files_diff = [&]() {
+        std::int64_t left_files = 0;
+        std::int64_t right_files = 0;
+
+        for (auto&& target : difference.differences)
+        {
+            if (target.second.left)
+            {
+                left_files += target.second.left->files.size();
+            }
+            if (target.second.right)
+            {
+                right_files += target.second.right->files.size();
+            }
+        }
+        return right_files - left_files;
+    }();
+
+    std::cout << std::showpos;
+
     std::cout << "\n\n";
-    std::cout << "Total Targets: 0\n"; // TODO
-    std::cout << "Total Files: 0\n"; // TODO
+    std::cout << "Total Targets: " << total_targets_diff << '\n';
+    std::cout << "Total Files: " << total_files_diff << '\n';
     std::cout << "Total Lines: " << std::showpos << total_line_count_diff.total_lines << '\n';
+    std::cout << "\n\n";
+
+    // per target breakdown of files and lines. this will require matching up names
+    for (auto&& target : difference.differences)
+    {
+        const std::int64_t files_diff = [&]() {
+            std::int64_t result = 0;
+            if (target.second.right)
+            {
+                result += target.second.right->files.size();
+            }
+            if (target.second.left)
+            {
+                result -= target.second.left->files.size();
+            }
+            return result;
+        }();
+
+        const std::int64_t lines_diff = [&]() {
+            std::int64_t result = 0;
+
+            if (target.second.right)
+            {
+                result += target.second.right->total_counts().total_lines;
+            }
+            if (target.second.left)
+            {
+                result -= target.second.left->total_counts().total_lines;
+            }
+
+            return result;
+        }();
+
+        std::cout << "Differences for target: " << target.first << "\n\n";
+        std::cout << "Total Files: " << files_diff << '\n';
+        std::cout << "Total Lines: " << lines_diff << '\n';
+        std::cout << "\n\n";    
+    }
+
+
+
+
+    std::cout << std::noshowpos;
 }
 
 void Backend::generate_diff_csv(const std::string& json_a, const std::string& json_b)
