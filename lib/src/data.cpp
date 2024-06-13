@@ -26,16 +26,16 @@ void Target::process(const std::string& source_directory)
                 }
                 auto path = entry.path().string();
 
-                if (path.starts_with(source_directory))
+                if (starts_with(path, source_directory))
                 {
                     path.erase(0, source_directory.size());
                 }
 
-                if (path.ends_with(".h") || path.ends_with(".hpp"))
+                if (ends_with(path, ".h") || ends_with(path, ".hpp"))
                 {
                     files.push_back(path);
                 }
-                if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
+                if (ends_with(path, ".c") || ends_with(path, ".cc") || ends_with(path, ".cxx") || ends_with(path, ".cpp"))
                 {
                     files.push_back(path);
                 }

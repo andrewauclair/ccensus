@@ -8,6 +8,18 @@
 #include <format>
 #include <array>
 
+#include <iomanip>
+#include <locale>
+
+template<class T>
+std::string FormatWithCommas(T value)
+{
+    std::stringstream ss;
+    ss.imbue(std::locale("en_US.UTF-8"));
+    ss << std::fixed << value;
+    return ss.str();
+}
+
 inline std::int64_t width_for_value(std::int64_t value)
 {
 	std::int64_t width = 1;
@@ -107,11 +119,15 @@ struct Table {
 						{
 							if (table.set_showpos[column])
 							{
-								out << std::format(std::locale("en_US.UTF-8"), "{:+L}", arg);
+								out << std::showpos;
+								out << FormatWithCommas(arg);
+								out << std::noshowpos;
+								//out << std::format(std::locale("en_US.UTF-8"), "{:+L}", arg);
 							}
 							else
 							{
-								out << std::format(std::locale("en_US.UTF-8"), "{:L}", arg);
+								out << FormatWithCommas(arg);
+								//out << std::format(std::locale("en_US.UTF-8"), "{:L}", arg);
 							}
 						}
 						else

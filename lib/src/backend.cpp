@@ -185,12 +185,12 @@ void Backend::generate_info_console(const Package& package)
                     
                     const auto path = entry.path().string();
 
-                    if (path.ends_with(".h") || path.ends_with(".hpp") ||
-                        path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
+                    if (ends_with(path, ".h") || ends_with(path, ".hpp") ||
+                        ends_with(path, ".c") || ends_with(path, ".cc") || ends_with(path, ".cxx") || ends_with(path, ".cpp"))
                     {
                         auto file_name = entry.path().string();
 
-                        if (file_name.starts_with(package.source_dir))
+                        if (starts_with(file_name, package.source_dir))
                         {
                             file_name.erase(0, package.source_dir.size());
                         }

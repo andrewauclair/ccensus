@@ -1,4 +1,5 @@
 #include "cmake.h"
+#include "utils.h"
 #include <filesystem>
 #include <fstream>
 
@@ -54,7 +55,7 @@ parse_result CMakeFrontend::read_index_file()
     // read reply json files from build directory
     for (auto const& dir_entry : std::filesystem::directory_iterator(m_build_directory + "/.cmake/api/v1/reply/")) 
     {
-        if (dir_entry.path().filename().string().starts_with("index-"))
+        if (starts_with(dir_entry.path().filename().string(), "index-"))
         {
             index_files.push_back(dir_entry);
         }
@@ -107,6 +108,10 @@ Package CMakeFrontend::parse_package(parse_result& json)
         std::string id;
         std::string name;
         std::string jsonFile;
+
+        cmake_target(std::string id, std::string name, std::string jsonFile) 
+        : id(std::move(id)), name(std::move(name)), jsonFile(std::move(jsonFile)) {
+        }
     };
     std::vector<cmake_target> target_cache;
     
@@ -195,7 +200,7 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
 
         if (obj.key() == "paths")
         {
-            target.is_third_party = std::string_view(obj.value()["build"]).starts_with("_deps");
+            target.is_third_party = starts_with(std::string_view(obj.value()["build"]), "_deps");
         }
 
         if (obj.key() == "dependencies")
@@ -213,11 +218,11 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
             {
                 auto path = std::string_view(source["path"]);
 
-                if (path.ends_with(".h") || path.ends_with(".hpp"))
+                if (ends_with(path, ".h") || ends_with(path, ".hpp"))
                 {
                     target.files.push_back(std::string(path));
                 }
-                else if (path.ends_with(".c") || path.ends_with(".cc") || path.ends_with(".cxx") || path.ends_with(".cpp"))
+                else if (ends_with(path, ".c") || ends_with(path, ".cc") || ends_with(path, ".cxx") || ends_with(path, ".cpp"))
                 {
                     target.files.push_back(std::string(path));
                 }

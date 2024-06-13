@@ -1,4 +1,5 @@
 #include "visual_studio_frontend.h"
+#include "utils.h"
 #include <fstream>
 #include <iostream>
 
@@ -24,7 +25,7 @@ Package VisualStudioFrontend::parse_solution(const std::string& name, std::istre
 
 	while (std::getline(solution_file, line))
 	{
-		if (line.starts_with("Project"))
+		if (starts_with(line, "Project"))
 		{
 			// Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LinesOfCode", "LinesOfCode.vcxproj", "{1FFDDF7A-0937-41D0-ACC7-FA78D4B60457}"
 
@@ -75,8 +76,8 @@ Target VisualStudioFrontend::parse_project(const std::string& name, std::istream
 
 	while (std::getline(project_filters, line))
 	{
-		if (line.contains("ClCompile Include") || line.contains("ClInclude Include") ||
-			line.contains("None Include"))
+		if (contains(line, "ClCompile Include") || contains(line, "ClInclude Include") ||
+			contains(line, "None Include"))
 		{
 			auto first = line.find_first_of('"');
 			auto last = line.find_last_of('"');

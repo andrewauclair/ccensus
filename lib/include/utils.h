@@ -2,6 +2,7 @@
 #define LOC_UTILS_H
 
 #include <string_view>
+#include <string>
 
 inline bool is_blank(std::string_view string)
 {
@@ -23,6 +24,29 @@ inline bool is_single_comment(std::string_view string)
 		prev_ch = ch;
 	}
 	return false;
+}
+
+inline bool starts_with(std::string_view str, std::string_view start)
+{
+    if (str.length() >= start.length())
+    {
+        return str.compare(0, start.length(), start) == 0;
+    }
+    return false;
+}
+
+inline bool ends_with(std::string_view str, std::string_view ending)
+{
+    if (str.length() >= ending.length())
+    {
+        return str.compare(str.length() - ending.length(), ending.length(), ending) == 0;
+    }
+    return false;
+}
+
+inline bool contains(std::string_view str, std::string_view search)
+{
+	return str.find(search) != std::string_view::npos;
 }
 
 enum class Block_Comment_Type
