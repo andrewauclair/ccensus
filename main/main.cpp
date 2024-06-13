@@ -12,7 +12,6 @@
 #include <sstream>
 #include <filesystem>
 #include <chrono>
-#include <span>
 #include <algorithm>
 #include <map>
 
