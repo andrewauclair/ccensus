@@ -5,7 +5,6 @@
 #include <ostream>
 #include <variant>
 #include <string>
-#include <format>
 #include <array>
 
 #include <iomanip>
