@@ -33,11 +33,11 @@ void Target::process(const std::string& source_directory)
 
                 if (ends_with(path, ".h") || ends_with(path, ".hpp"))
                 {
-                    files.push_back(path);
+                    files.insert(path);
                 }
                 if (ends_with(path, ".c") || ends_with(path, ".cc") || ends_with(path, ".cxx") || ends_with(path, ".cpp"))
                 {
-                    files.push_back(path);
+                    files.insert(path);
                 }
             }
         }

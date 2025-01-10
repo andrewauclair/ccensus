@@ -475,7 +475,7 @@ void Backend::generate_diff_console(const std::string& json_a, const std::string
 
                 if (left != target.second.left->files.end() && right != target.second.right->files.end())
                 {
-                    std::cout << file << ": " << (target.second.right->file_counts[file].total_lines() - target.second.left->file_counts[file].total_lines()) << '\n';
+                    std::cout << file << ": " << (target.second.right->file_counts[file].total_lines - target.second.left->file_counts[file].total_lines) << '\n';
                 }
                 else if (left != target.second.left->files.end())
                 {

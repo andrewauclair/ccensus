@@ -97,7 +97,7 @@ Target VisualStudioFrontend::parse_project(const std::string& name, std::istream
 				path = project_path.parent_path().string() + "/" + file_name;
 			}
 
-			target.files.push_back(file_name);
+			target.files.insert(file_name);
 		}
 	}
 	return target;

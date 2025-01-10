@@ -274,7 +274,7 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
                 {
                     for (auto file : trace.value().get_array())
                     {
-                        target.files.insert(std::string(file.value()));
+                        target.files.insert(std::string(std::string_view(file.value())));
                     }
                 }
                 if (trace.key() == "nodes")
