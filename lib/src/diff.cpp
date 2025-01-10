@@ -66,7 +66,7 @@ ProjectDiff project_difference(const std::string& json_a, const std::string& jso
 
                         std::string name = std::string(std::string_view(file["name"]));
                         load_target.file_counts[name] = counts;
-                        load_target.files.push_back(name);
+                        load_target.files.insert(name);
                     }
 
                     load_target.calculate_total_counts();

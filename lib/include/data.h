@@ -9,6 +9,7 @@
 #include <string>
 #include <map>
 #include <optional>
+#include <set>
 
 struct BacktraceNode
 {
@@ -51,7 +52,7 @@ public:
 	std::vector<std::string> dependency_ids;
 
 	std::vector<std::string> commands;
-	std::vector<std::string> files;
+	std::set<std::string> files;
 
 	std::vector<BacktraceNode> backtrace_nodes;
 

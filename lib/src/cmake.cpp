@@ -220,11 +220,11 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
 
                 if (ends_with(path, ".h") || ends_with(path, ".hpp"))
                 {
-                    target.files.push_back(std::string(path));
+                    target.files.insert(std::string(path));
                 }
                 else if (ends_with(path, ".c") || ends_with(path, ".cc") || ends_with(path, ".cxx") || ends_with(path, ".cpp"))
                 {
-                    target.files.push_back(std::string(path));
+                    target.files.insert(std::string(path));
                 }
             }
         }
@@ -274,7 +274,7 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
                 {
                     for (auto file : trace.value().get_array())
                     {
-                        target.files.emplace_back(std::string_view(file.value()));
+                        target.files.insert(std::string(file.value()));
                     }
                 }
                 if (trace.key() == "nodes")

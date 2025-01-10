@@ -453,10 +453,40 @@ void Backend::generate_diff_console(const std::string& json_a, const std::string
             return result;
         }();
 
+        if (files_diff == 0 && lines_diff == 0)
+        {
+            continue;
+        }
         std::cout << "Differences for target: " << target.first << "\n\n";
         std::cout << "Total Files: " << files_diff << '\n';
         std::cout << "Total Lines: " << lines_diff << '\n';
         std::cout << "\n\n";    
+
+        if (target.second.left && target.second.right)
+        {
+            std::set<std::string> files;
+            files.insert(target.second.right->files.begin(), target.second.right->files.end());
+            files.insert(target.second.left->files.begin(), target.second.left->files.end());
+
+            for (auto&& file : files)
+            {
+                auto left = std::find(target.second.left->files.begin(), target.second.left->files.end(), file);
+                auto right = std::find(target.second.right->files.begin(), target.second.right->files.end(), file);
+
+                if (left != target.second.left->files.end() && right != target.second.right->files.end())
+                {
+                    std::cout << file << ": " << (target.second.right->file_counts[file].total_lines() - target.second.left->file_counts[file].total_lines()) << '\n';
+                }
+                else if (left != target.second.left->files.end())
+                {
+                    std::cout << file << ": removed\n";
+                }
+                else if (right != target.second.right->files.end())
+                {
+                    std::cout << file << ": added\n";
+                }
+            }
+        }
     }
 
 
