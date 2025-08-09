@@ -9,6 +9,7 @@
 
 #include <iomanip>
 #include <locale>
+#include <sstream>
 
 template<class T>
 std::string FormatWithCommas(T value)

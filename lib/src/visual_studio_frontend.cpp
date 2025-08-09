@@ -2,6 +2,8 @@
 #include "utils.h"
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <sstream>
 
 VisualStudioFrontend::VisualStudioFrontend(const std::string& visual_studio_sln)
 	: m_visual_studio_sln(visual_studio_sln)

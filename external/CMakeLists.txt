@@ -36,6 +36,8 @@ FetchContent_Declare(
     GIT_TAG         v3.11.2
 )
 
+set(CLI11_PRECOMPILED ON)
+
 FetchContent_Declare(
     CLI11
     GIT_SHALLOW     TRUE
