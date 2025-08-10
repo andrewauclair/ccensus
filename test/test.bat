@@ -26,10 +26,15 @@ cd ..
 
 cd ..
 
-..\cmake-build-windows\bin\RelWithDebInfo\ccensus.exe --json --cmake windows/poco-11/build-windows --output-file poco-11.json
-..\cmake-build-windows\bin\RelWithDebInfo\ccensus.exe --json --cmake windows/poco-12/build-windows --output-file poco-12.json
-..\cmake-build-windows\bin\RelWithDebInfo\ccensus.exe --json --cmake windows/poco-13/build-windows --output-file poco-13.json
-..\cmake-build-windows\bin\RelWithDebInfo\ccensus.exe --json --cmake windows/poco-14/build-windows --output-file poco-14.json
+%1\ccensus.exe --json --cmake windows/poco-11/build-windows --output-file poco-11.json
+%1\ccensus.exe --json --cmake windows/poco-12/build-windows --output-file poco-12.json
+%1\ccensus.exe --json --cmake windows/poco-13/build-windows --output-file poco-13.json
+%1\ccensus.exe --json --cmake windows/poco-14/build-windows --output-file poco-14.json
+
+python clip-file.py poco-11.json
+python clip-file.py poco-12.json
+python clip-file.py poco-13.json
+python clip-file.py poco-14.json
 
 fc expected-poco-11.json poco-11.json
 fc expected-poco-12.json poco-12.json
