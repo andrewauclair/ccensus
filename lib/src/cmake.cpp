@@ -46,7 +46,7 @@ bool CMakeFrontend::query()
     return std::system(std::string("(cd " + m_build_directory + " && cmake .)").c_str()) == 0;
 }
 
-parse_result CMakeFrontend::read_index_file()
+std::string CMakeFrontend::read_index_file()
 {
 	const std::string reply_directory = m_build_directory + "/.cmake/api/v1/reply/";
 
@@ -72,36 +72,49 @@ parse_result CMakeFrontend::read_index_file()
 
     const auto file = index_files.back().path().filename();
 
-    return read_json(reply_directory + file.string());
+    return reply_directory + file.string();
 }
 
-parse_result CMakeFrontend::read_model_file(parse_result& json)
+std::string CMakeFrontend::read_model_file(const std::string& index_file)
 {
+    /*parse_result json;
+    json.string = simdjson::padded_string::load(index_file);
+    json.doc = json.parser.iterate(json.string);*/
+    simdjson::ondemand::parser json;
+    simdjson::padded_string json_string = simdjson::padded_string::load(index_file);
+    simdjson::ondemand::document json_doc = json.iterate(json_string);
+
     const std::string reply_directory = m_build_directory + "/.cmake/api/v1/reply/";
 
-    auto reply = json.doc["reply"];
+    auto reply = json_doc["reply"];
     auto client = reply["client-ccensus"];
     auto codemodel = client["codemodel-v2"];
     auto file = std::string_view(codemodel["jsonFile"]);
 
-    return read_json(reply_directory + std::string(file));
+    return reply_directory + std::string(file);
 }
+//
+//parse_result CMakeFrontend::read_json(const std::string& path)
+//{
+//    parse_result result;
+//    result.string = simdjson::padded_string::load(path);
+//
+//    result.doc = result.parser.iterate(result.string);
+//    return result;
+//}
 
-parse_result CMakeFrontend::read_json(const std::string& path)
+Package CMakeFrontend::parse_package(const std::string& model_file)
 {
-    parse_result result;
-    result.string = simdjson::padded_string::load(path);
-
-    result.doc = result.parser.iterate(result.string);
-    return result;
-}
-
-Package CMakeFrontend::parse_package(parse_result& json)
-{
+    /*parse_result json;
+    json.string = simdjson::padded_string::load(model_file);
+    json.doc = json.parser.iterate(json.string);*/
+    simdjson::ondemand::parser json;
+    simdjson::padded_string json_string = simdjson::padded_string::load(model_file);
+    simdjson::ondemand::document json_doc = json.iterate(json_string);
     const std::string reply_directory = m_build_directory + "/.cmake/api/v1/reply/";
 
     // TODO we should probably handle the case where there are multiple configs, but for now we'll just process the first config we find
-    auto configurations = json.doc["configurations"];
+    auto configurations = json_doc["configurations"];
 
     struct cmake_target
     {
@@ -133,10 +146,14 @@ Package CMakeFrontend::parse_package(parse_result& json)
             const auto name = std::string_view(target["name"]);
 
             target_cache.emplace_back(std::string(id), std::string(name), reply_directory + std::string(std::string_view(target["jsonFile"])));
+            std::cout << "found target: " << target_cache.back().name << " " << target_cache.back().id << " " << target_cache.back().jsonFile << '\n';
         }
+
+        // skip the rest of the configs for now
+        break;
     }
 
-    auto paths = json.doc["paths"];
+    auto paths = json_doc["paths"];
     auto source_directory = std::string(std::string_view(paths["source"]));
 
     Package package;
@@ -144,9 +161,14 @@ Package CMakeFrontend::parse_package(parse_result& json)
 
     for (const cmake_target& cached_target : target_cache)
     {
-        auto target_json = read_json(cached_target.jsonFile);
+        simdjson::ondemand::parser target_parser;
+        simdjson::padded_string target_string = simdjson::padded_string::load(cached_target.jsonFile);
+        simdjson::ondemand::document target_doc = target_parser.iterate(target_string);
+        /*parse_result target_json;
+        target_json.string = simdjson::padded_string::load(cached_target.jsonFile);
+        target_json.doc = target_json.parser.iterate(target_json.string);*/
 
-        Target target = parse_target(source_directory, target_json);
+        Target target = parse_target(source_directory, target_doc);
 
         if (target.is_utility)
         {
@@ -180,37 +202,38 @@ Package CMakeFrontend::parse_package(parse_result& json)
     return package;
 }
 
-Target CMakeFrontend::parse_target(const std::string& source_directory, parse_result& json)
+Target CMakeFrontend::parse_target(const std::string& source_directory, simdjson::ondemand::document& json)
 {
     Target target;
 
-    auto root = json.doc.get_object();
+    auto root = json.get_object();
 
     for (auto obj : root)
     {
-        if (obj.key() == "name")
+	    auto basic_string_view = obj.unescaped_key().value();
+        if (basic_string_view == "name")
         {
             target.name = std::string_view(obj.value());
         }
 
-        if (obj.key() == "type")
+        if (basic_string_view == "type")
         {
             target.is_utility = std::string_view(obj.value()) == "UTILITY";
         }
 
-        if (obj.key() == "paths")
+        if (basic_string_view == "paths")
         {
             target.is_third_party = starts_with(std::string_view(obj.value()["build"]), "_deps");
         }
 
-        if (obj.key() == "dependencies")
+        if (basic_string_view == "dependencies")
         {
             for (auto dependency : obj.value())
             {
                 target.dependency_ids.push_back(std::string(std::string_view(dependency["id"])));
             }
         }
-        if (obj.key() == "sources")
+        if (basic_string_view == "sources")
         {
             auto sources = obj.value();
 
@@ -229,7 +252,7 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
             }
         }
 
-        if (obj.key() == "compileGroups")
+        if (basic_string_view == "compileGroups")
         {
             for (auto group : obj.value().get_array())
             {
@@ -259,7 +282,7 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
                 }
             }
         }
-        if (obj.key() == "backtraceGraph")
+        if (basic_string_view == "backtraceGraph")
         {
             for (auto trace : obj.value().get_object())
             {
@@ -274,7 +297,18 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, parse_re
                 {
                     for (auto file : trace.value().get_array())
                     {
-                        target.files.insert(std::string(std::string_view(file.value())));
+                        //target.files.insert(std::string(std::string_view(file.value())));
+
+                        auto path = std::string_view(file.value());
+
+                        if (ends_with(path, ".h") || ends_with(path, ".hpp"))
+                        {
+                            target.files.insert(std::string(path));
+                        }
+                        else if (ends_with(path, ".c") || ends_with(path, ".cc") || ends_with(path, ".cxx") || ends_with(path, ".cpp"))
+                        {
+                            target.files.insert(std::string(path));
+                        }
                     }
                 }
                 if (trace.key() == "nodes")

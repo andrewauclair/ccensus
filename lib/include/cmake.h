@@ -5,11 +5,11 @@
 #include "simdjson.h"
 #include <string>
 
-struct parse_result {
-    simdjson::ondemand::parser parser;
-    simdjson::padded_string string;
-    simdjson::ondemand::document doc;
-};
+//struct parse_result {
+//    simdjson::ondemand::parser parser;
+//    simdjson::padded_string string;
+//    simdjson::ondemand::document doc;
+//};
 
 class CMakeFrontend
 {
@@ -20,16 +20,16 @@ public:
 
 private:
     bool query();
-    parse_result read_index_file();
-    parse_result read_model_file(parse_result& json);
+    std::string read_index_file();
+    std::string read_model_file(const std::string& index_file);
 
-    parse_result read_json(const std::string& path);
+    //parse_result read_json(const std::string& path);
 
     // parses the targets from the reply json file
-    Package parse_package(parse_result& json);
+    Package parse_package(const std::string& model_file);
 
     // parse a single target from a reply target json file found from the main reply file
-    Target parse_target(const std::string& source_directory, parse_result& json);
+    Target parse_target(const std::string& source_directory, simdjson::ondemand::document& json);
 
     std::string m_build_directory;
 };
