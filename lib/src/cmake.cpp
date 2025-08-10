@@ -121,10 +121,6 @@ Package CMakeFrontend::parse_package(const std::string& model_file)
         std::string id;
         std::string name;
         std::string jsonFile;
-
-        cmake_target(std::string id, std::string name, std::string jsonFile) 
-        : id(std::move(id)), name(std::move(name)), jsonFile(std::move(jsonFile)) {
-        }
     };
     std::vector<cmake_target> target_cache;
     
@@ -142,11 +138,11 @@ Package CMakeFrontend::parse_package(const std::string& model_file)
 
         for (auto target : targets)
         {
-            const auto id = std::string_view(target["id"]);
-            const auto name = std::string_view(target["name"]);
+            const auto id = std::string(std::string_view(target["id"]));
+            const auto name = std::string(std::string_view(target["name"]));
+            std::string file = reply_directory + std::string(std::string_view(target["jsonFile"]));
 
-            target_cache.emplace_back(std::string(id), std::string(name), reply_directory + std::string(std::string_view(target["jsonFile"])));
-            std::cout << "found target: " << target_cache.back().name << " " << target_cache.back().id << " " << target_cache.back().jsonFile << '\n';
+            target_cache.push_back({ id, name, file });
         }
 
         // skip the rest of the configs for now
@@ -273,10 +269,12 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, simdjson
                                 if (path_item.key() == "path")
                                 {
                                     includePath.path = std::string_view(path_item.value());
+
+                                    includePath.path = std::filesystem::absolute(includePath.path).generic_string();
                                 }
                             }
 
-                            target.include_paths.push_back(includePath);
+                            target.include_paths.insert(includePath);
                         }
                     }
                 }

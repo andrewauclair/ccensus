@@ -23,6 +23,11 @@ struct IncludePath
 {
 	std::uint32_t backtrace_index;
 	std::string path;
+
+	bool operator<(const IncludePath& other) const
+	{
+		return path < other.path;
+	}
 };
 
 struct Target
@@ -31,7 +36,7 @@ struct Target
     std::string name;
     std::string path;
 
-	std::vector<IncludePath> include_paths;
+	std::set<IncludePath> include_paths;
 
 	// not sure we can actually tell if something is 3rd party in VS solutions
 	// but we should be able to do this for cmake

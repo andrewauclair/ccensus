@@ -32,11 +32,15 @@ struct CommandLineOptions
 	bool json = false;
 	bool targets_only = false;
 
-	OutputType outputType() const
+	std::vector<OutputType> outputTypes() const
 	{
-		if (csv) return OutputType::CSV;
-		if (json) return OutputType::JSON;
-		return OutputType::CONSOLE;
+		std::vector<OutputType> outputs;
+
+		if (csv) outputs.push_back(OutputType::CSV);
+		if (json) outputs.push_back(OutputType::JSON);
+		if (console) outputs.push_back(OutputType::CONSOLE);
+
+		return outputs;
 	}
 };
 
@@ -109,12 +113,20 @@ std::cout << package.source_dir << '\n';
 		package.process();
 
 		Backend backend;
-		backend.generate_info_output(package, options.outputType(), options.targets_only);
+
+		for (OutputType outputType : options.outputTypes())
+		{
+			backend.generate_info_output(package, outputType, options.targets_only);
+		}
 	}
 	else if (!options.json_diff.empty())
 	{
 		Backend backend;
-		backend.generate_diff_output(options.json_diff[0], options.json_diff[1], options.outputType(), options.targets_only);
+		
+		for (OutputType outputType : options.outputTypes())
+		{
+			backend.generate_diff_output(options.json_diff[0], options.json_diff[1], outputType, options.targets_only);
+		}
 	}
 
 	auto clock_now = std::chrono::system_clock::now();
