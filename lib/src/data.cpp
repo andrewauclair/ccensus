@@ -25,10 +25,16 @@ void Target::process(const std::string& source_directory)
                     continue;
                 }
                 auto path = entry.path().string();
+                std::replace(path.begin(), path.end(), '\\', '/');
 
                 if (starts_with(path, source_directory))
                 {
                     path.erase(0, source_directory.size());
+                }
+
+                if (name == "ActiveRecord")
+                {
+                    std::cout << "file path from include_paths: " << path << '\n';
                 }
 
                 if (ends_with(path, ".h") || ends_with(path, ".hpp"))
@@ -51,7 +57,7 @@ void Target::process(const std::string& source_directory)
 
     for (auto&& file_path : files)
     {
-        auto path = file_path;
+        std::string path = file_path;
 
         if (!std::filesystem::path(path).is_absolute())
         {

@@ -154,6 +154,7 @@ Package CMakeFrontend::parse_package(const std::string& model_file)
 
     Package package;
     package.source_dir = std::filesystem::canonical(source_directory).string() + "/";
+    std::replace(package.source_dir.begin(), package.source_dir.end(), '\\', '/');
 
     for (const cmake_target& cached_target : target_cache)
     {
@@ -237,6 +238,10 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, simdjson
             {
                 auto path = std::string_view(source["path"]);
 
+                if (target.name == "ActiveRecord")
+                {
+                    std::cout << "file path from 'sources': " << path << '\n';
+                }
                 if (ends_with(path, ".h") || ends_with(path, ".hpp"))
                 {
                     target.files.insert(std::string(path));
@@ -298,6 +303,11 @@ Target CMakeFrontend::parse_target(const std::string& source_directory, simdjson
                         //target.files.insert(std::string(std::string_view(file.value())));
 
                         auto path = std::string_view(file.value());
+
+                        if (target.name == "ActiveRecord")
+                        {
+                            std::cout << "file path from backtraceGraph files: " << path << '\n';
+                        }
 
                         if (ends_with(path, ".h") || ends_with(path, ".hpp"))
                         {

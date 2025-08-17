@@ -396,7 +396,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/cmake-build
 /cmake-build-vs2022
 /TestProjects/cmake-build-vs2022
 /build
+/test/windows
 /.vscode
