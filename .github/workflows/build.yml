@@ -98,7 +98,7 @@ jobs:
         ${{ github.workspace }}/test/test.bat ${{ steps.strings.outputs.build-output-dir }}/bin
 
     - name: Upload Test JSONs
-      if: matrix.os == 'windows-latest'
+      if: failure() && matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
         name: Test JSONs
