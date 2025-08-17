@@ -97,4 +97,14 @@ jobs:
         cd ${{ github.workspace }}/test
         ${{ github.workspace }}/test/test.bat ${{ steps.strings.outputs.build-output-dir }}/bin
 
+    - name: Upload Test JSONs
+          if: matrix.os == 'windows-latest'
+          uses: actions/upload-artifact@v4
+          with:
+            name: Test JSONs
+            path: |
+              ${{ github.workspace }}/test/poco-11.json
+              ${{ github.workspace }}/test/poco-12.json
+              ${{ github.workspace }}/test/poco-13.json
+              ${{ github.workspace }}/test/poco-14.json
 
