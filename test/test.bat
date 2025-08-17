@@ -31,6 +31,11 @@ cd ..
 %1\ccensus.exe --json --cmake windows/poco-13/build-windows --output-file poco-13.json
 %1\ccensus.exe --json --cmake windows/poco-14/build-windows --output-file poco-14.json
 
+%1\ccensus.exe --json --cmake windows/poco-11/build-windows --output-file poco-actual-11.json
+%1\ccensus.exe --json --cmake windows/poco-12/build-windows --output-file poco-actual-12.json
+%1\ccensus.exe --json --cmake windows/poco-13/build-windows --output-file poco-actual-13.json
+%1\ccensus.exe --json --cmake windows/poco-14/build-windows --output-file poco-actual-14.json
+
 python clip-file.py poco-11.json
 python clip-file.py poco-12.json
 python clip-file.py poco-13.json

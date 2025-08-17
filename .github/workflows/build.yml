@@ -107,4 +107,8 @@ jobs:
           ${{ github.workspace }}/test/poco-12.json
           ${{ github.workspace }}/test/poco-13.json
           ${{ github.workspace }}/test/poco-14.json
+          ${{ github.workspace }}/test/poco-actual-11.json
+          ${{ github.workspace }}/test/poco-actual-12.json
+          ${{ github.workspace }}/test/poco-actual-13.json
+          ${{ github.workspace }}/test/poco-actual-14.json
 
